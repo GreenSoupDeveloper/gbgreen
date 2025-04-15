@@ -8,116 +8,67 @@
 #include <stdint.h>
 #include <windows.h>
 #include <cpu.h>
+#include <tools.h>
+#include <emulator.h>;
 
 
-/* Screen dimensions */
-const int wt = 320;
-const int ht = 288;
-const int gbResX = 160;
-const int gbResY = 144;
-uint32_t pixels[160 * 144];
-static SDL_Window* window = nullptr;
-static SDL_Renderer* renderer = nullptr;
-static SDL_Texture* texture = nullptr;
-bool romLoaded = false;
-
-int GetPixelLocationFromCoordinate(int x, int y) {
-	return y * gbResX + x;
-}
-CPU::~CPU() {
-
-}
+CPU::~CPU() {}
 CPU cpu;
-
-void RenderToDisplay(std::string filepath) {
-	std::fstream file(filepath + ".gbp", std::ios::in);  // Explicitly open for reading
-
-	if (!file.is_open()) {  // Fixed typo: is.open() -> is_open()
-		std::cerr << "Failed to open '" << filepath << ".gbp' file!" << std::endl;  // Fixed: test -> cerr
-		// Changed from SRL_PPL_PRILINE to standard error code
-	}
-
-	// Read the entire file into a vector (dynamic array)
-	std::vector<char> charArray;
-	char ch;  // Fixed variable name: pp -> ch
-	while (file.get(ch)) {
-		charArray.push_back(ch);
-	}
-	charArray.erase(std::remove(charArray.begin(), charArray.end(), '\n'), charArray.end());
-
-	// If you need a raw char array instead of vector:
-	char* rawArray = new char[charArray.size()];  // Fixed syntax: char: -> char*, new char( -> new char[
-	std::copy(charArray.begin(), charArray.end(), rawArray);
-
-	// Don't forget to delete[] rawArray when done!
+Tools tools;
+Emulator emu;
 
 
 
-
-	for (int i = 0; i < (gbResX * gbResY); i++) {
-
-	
-
-		
-
-		if (rawArray[i] == '0') {
-			pixels[i] = 0xffffffff;
-		}
-		else if (rawArray[i] == '1') {
-			pixels[i] = 0xffAAAAAA;
-		}
-		else if (rawArray[i] == '2') {
-			pixels[i] = 0xff555555;
-		}
-		else {
-			pixels[i] = 0xff000000;
-		}
-		
-
-	}
-	delete[] rawArray;
-}
 /* Called once at startup */
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 {
 
 
-	if (!SDL_CreateWindowAndRenderer("GBGreen", wt, ht, 0, &window, &renderer)) {
+	if (!SDL_CreateWindowAndRenderer("GBGreen", emu.wt, emu.ht, 0, &emu.window, &emu.renderer)) {
 		SDL_Log("Couldn't create window and renderer: %s", SDL_GetError());
 		return SDL_APP_FAILURE;
 	}
 
 
 
-	float scaleX = (float)wt / gbResX;
-	float scaleY = (float)ht / gbResY;
+	float scaleX = (float)emu.wt / emu.gbResX;
+	float scaleY = (float)emu.ht / emu.gbResY;
 
-	SDL_SetRenderScale(renderer, scaleX, scaleY);
 
-	texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, gbResX, gbResY);
-	SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+	SDL_SetRenderScale(emu.renderer, scaleX, scaleY);
 
-	if (!texture) {
+	emu.texture = SDL_CreateTexture(emu.renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, emu.gbResX, emu.gbResY);
+	SDL_SetTextureScaleMode(emu.texture, SDL_SCALEMODE_NEAREST);
+
+	if (!emu.texture) {
 		SDL_Log("Failed to create texture: %s", SDL_GetError());
 		return SDL_APP_FAILURE;
 	}
-	RenderToDisplay("assets/title");
+	tools.getConfig();
+	if (emu.selectedColorPallete == 0) {
+		tools.readPaletteFile("palettes/Monochrome.gbcp");
+	}
+	else {
+		tools.readPaletteFile("palettes/Green.gbcp");
+	}
+	tools.RenderToDisplay("assets/title");
 	if (argc <= 1)
 	{
 		std::cerr << "Path to ROM to be loaded must be given as argument\nType -help to see usage\n";
-		romLoaded = false;
+		emu.romLoaded = false;
 	}
 	else {
 
 		if (!cpu.LoadROM(argv[1])) //loading ROM provided as argument
 		{
 			std::cerr << "ROM could not be loaded. Possibly invalid path given\n";
-			romLoaded = false;
+			emu.romLoaded = false;
 		}
 		else {
-			romLoaded = true;
+			emu.romLoaded = true;
 		}
 	}
+
 
 
 
@@ -126,23 +77,60 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 	return SDL_APP_CONTINUE;
 }
 void UpdatePixels() {
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer);
+	SDL_SetRenderDrawColor(emu.renderer, 0, 0, 0, 255);
+	SDL_RenderClear(emu.renderer);
 
 	// Fill pixel array with white (for testing)
 
 
-	SDL_UpdateTexture(texture, NULL, pixels, gbResX * sizeof(uint32_t));
+	SDL_UpdateTexture(emu.texture, NULL, emu.pixels, emu.gbResX * sizeof(uint32_t));
 
 	// In SDL3, use SDL_RenderTexture instead of SDL_RenderCopy
-	SDL_RenderTexture(renderer, texture, NULL, NULL);
+	SDL_RenderTexture(emu.renderer, emu.texture, NULL, NULL);
 
-	SDL_RenderPresent(renderer);
+	SDL_RenderPresent(emu.renderer);
 }
 /* Called once per frame */
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
-	if (romLoaded) {
+
+	if (emu.emuMenuOpened) {
+		if (emu.menuItemOpened == 0) {
+			if (emu.menuItemSelected == 0)
+				tools.RenderToDisplay("assets/menu1_sel1");
+			else if (emu.menuItemSelected == 1)
+				tools.RenderToDisplay("assets/menu1_sel2");
+			else if (emu.menuItemSelected == 2)
+				tools.RenderToDisplay("assets/menu1_sel3");
+			else
+				tools.RenderToDisplay("assets/menu1_sel4");
+		}
+		else {
+			if (emu.menuItemSelected == 0) {
+				if (emu.menuItemOptionSelected == 0) 
+					tools.readPaletteFile("palettes/Monochrome.gbcp");
+				else if (emu.menuItemOptionSelected == 1)
+					tools.readPaletteFile("palettes/Green.gbcp");
+				else
+					tools.readPaletteFile("palettes/VeryGreen.gbcp");
+
+
+				if (emu.menuItemOptionSelected == 0)
+					tools.RenderToDisplay("assets/menu2_sel1-1");
+				else if (emu.menuItemOptionSelected == 1)
+					tools.RenderToDisplay("assets/menu2_sel1-2");
+				else
+					tools.RenderToDisplay("assets/menu2_sel1-3");
+			}
+		}
+
+	}
+	else {
+		tools.RenderToDisplay("assets/title");
+		emu.menuItemSelected = 0;
+		emu.menuItemOpened = 0;
+	}
+	if (emu.romLoaded) {
 		cpu.Cycle();
 	}
 	//cpu.d_PrintState();
@@ -172,7 +160,108 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 	{
 		if (event->key.key == SDLK_ESCAPE)
 		{
-			exit(0);
+			if (emu.emuMenuOpened)
+				emu.emuMenuOpened = false;
+			else
+				emu.emuMenuOpened = true;
+		}
+		if (emu.emuMenuOpened) {
+			if (event->key.key == SDLK_UP)
+			{
+				emu.menuItemSelected -= 1;
+				if (emu.menuItemOpened == 0) {
+					if (emu.menuItemSelected < 0) {
+						emu.menuItemSelected = 3;
+					}
+				}
+				else {
+					if (emu.menuItemSelected < 0) {
+						emu.menuItemSelected = 0;
+					}
+				}
+			}
+			if (event->key.key == SDLK_DOWN)
+			{
+				emu.menuItemSelected += 1;
+				if (emu.menuItemOpened == 0) {
+					if (emu.menuItemSelected > 3) {
+						emu.menuItemSelected = 0;
+					}
+				}
+				else {
+					if (emu.menuItemSelected > 0) {
+						emu.menuItemSelected = 0;
+					}
+				}
+			}
+			if (event->key.key == SDLK_LEFT)
+			{
+				emu.menuItemOptionSelected -= 1;
+				if (emu.menuItemSelected == 0) {
+					if (emu.menuItemOptionSelected < 0) {
+						emu.menuItemOptionSelected = 2;
+					}
+
+
+					emu.selectedColorPallete = emu.menuItemOptionSelected;
+					tools.saveConfig();
+				}
+			}
+			if (event->key.key == SDLK_RIGHT)
+			{
+				emu.menuItemOptionSelected += 1;
+
+				if (emu.menuItemSelected == 0) {
+					if (emu.menuItemOptionSelected > 2) {
+						emu.menuItemOptionSelected = 0;
+					}
+
+
+					emu.selectedColorPallete = emu.menuItemOptionSelected;
+					tools.saveConfig();
+				}
+
+			}
+			if (event->key.key == SDLK_RETURN)
+			{
+
+				if (emu.menuItemSelected == 0) {
+					if (emu.menuItemOpened == 0)
+						emu.emuMenuOpened = false;
+
+					//hi
+				}
+				else if (emu.menuItemSelected == 1) {
+					if (emu.menuItemOpened == 0) {
+						
+						if (!cpu.LoadROM("test.gb")) //loading ROM provided as argument
+						{
+							std::cerr << "ROM could not be loaded. Possibly invalid path given\n";
+							emu.romLoaded = false;
+						}
+						else {
+							emu.romLoaded = true;
+						}
+						emu.emuMenuOpened = false;
+					}
+				}
+				else if (emu.menuItemSelected == 2) {
+					if (emu.menuItemOpened == 0) {
+						emu.menuItemOpened = 3;
+						emu.emuMenuOpened = true;
+						emu.menuItemSelected = 0;
+						emu.menuItemOptionSelected = emu.selectedColorPallete;
+					}
+
+				}
+
+				else if (emu.menuItemSelected == 3) {
+					if (emu.menuItemOpened == 0) {
+						emu.emuMenuOpened = false;
+						exit(0);
+					}
+				}
+			}
 		}
 
 		for (int i = 0; i < 16; ++i)
@@ -202,9 +291,9 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 /* Called once at shutdown */
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
-	if (texture) SDL_DestroyTexture(texture);
-	if (renderer) SDL_DestroyRenderer(renderer);
-	if (window) SDL_DestroyWindow(window);
+	if (emu.texture) SDL_DestroyTexture(emu.texture);
+	if (emu.renderer) SDL_DestroyRenderer(emu.renderer);
+	if (emu.window) SDL_DestroyWindow(emu.window);
 
 	SDL_Log("shutting down emulator..");
 }
