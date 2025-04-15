@@ -70,9 +70,9 @@ void CPU::ld_addr_rr_a(RegisterPair& reg) {
 	uint16_t address = reg.full;
 	memory[address] = AF.hi; // AF.hi = A
 }
-void CPU::xor_a(Register8 src) {
-	AF.hi ^= getReg8(src);
-	setFlag(FLAG_Z, AF.hi == 0);
+void CPU::xor_r_r(Register8 reg1, Register8 reg2) {
+	getReg8(reg1) ^= getReg8(reg2);
+	setFlag(FLAG_Z, (getReg8(reg1) == 0));
 	setFlag(FLAG_N, false);
 	setFlag(FLAG_H, false);
 	setFlag(FLAG_C, false);
@@ -355,6 +355,117 @@ void CPU::adc_r_rr(Register8 reg, RegisterPair pair) {
 	setFlag(FLAG_Z, (getReg8(reg) == 0));
 	setFlag(FLAG_N, false);
 }
+void CPU::sub_r(Register8 reg) {
+	uint8_t result = getReg8(REG_A) - getReg8(reg);
+
+	setFlag(FLAG_Z, (result == 0));
+	setFlag(FLAG_N, true);
+	setFlag(FLAG_H, ((getReg8(REG_A) & 0x0F) < (getReg8(reg) & 0x0F)));
+	setFlag(FLAG_C, (getReg8(REG_A) < getReg8(reg)));
+
+	getReg8(REG_A) = result;
+}
+void CPU::sub_rr(RegisterPair pair) {
+	uint8_t value = memory[pair.full];
+	uint8_t result = getReg8(REG_A) - value;
+
+	setFlag(FLAG_Z, (result == 0));
+	setFlag(FLAG_N, true);
+	setFlag(FLAG_H, (getReg8(REG_A) & 0x0F) < (value & 0x0F));
+	setFlag(FLAG_C, getReg8(REG_A) < value);
+
+	getReg8(REG_A) = result;
+}
+void CPU::sbc_r_r(Register8 reg1, Register8 reg2) {
+	uint8_t carry = getFlag(FLAG_C) ? 1 : 0;
+	uint16_t result = getReg8(reg1) - getReg8(reg2) - carry;
+
+	setFlag(FLAG_H, ((getReg8(reg1) & 0x0F) < ((getReg8(reg2) & 0x0F) + carry)));
+	setFlag(FLAG_C, getReg8(reg1) < (getReg8(reg2) + carry));
+	getReg8(REG_A) = static_cast<uint8_t>(result);
+	setFlag(FLAG_Z, (getReg8(reg1) == 0));
+	setFlag(FLAG_N, true);
+}
+void CPU::sbc_r_rr(Register8 reg, RegisterPair pair) {
+	uint8_t value = memory[pair.full];
+	uint8_t carry = getFlag(FLAG_C) ? 1 : 0;
+	uint16_t result = getReg8(reg) - value - carry;
+
+	setFlag(FLAG_H, ((getReg8(reg) & 0x0F) < ((value & 0x0F) + carry)));
+	setFlag(FLAG_C, getReg8(reg) < (value + carry));
+	getReg8(reg) = static_cast<uint8_t>(result);
+	setFlag(FLAG_Z, (getReg8(reg) == 0));
+	setFlag(FLAG_N, true);
+}
+void CPU::and_r_r(Register8 reg1, Register8 reg2) {
+	getReg8(reg1) &= getReg8(reg2);
+	setFlag(FLAG_Z, (getReg8(reg1) == 0));
+	setFlag(FLAG_N, false);
+	setFlag(FLAG_H, true);
+	setFlag(FLAG_C, false);
+}
+void CPU::and_r_rr(Register8 reg, RegisterPair pair) {
+	uint8_t value = memory[pair.full];
+	getReg8(reg) &= value;
+
+	setFlag(FLAG_Z, (getReg8(reg) == 0));
+	setFlag(FLAG_N, false);
+	setFlag(FLAG_H, true);
+	setFlag(FLAG_C, false);
+
+}
+void CPU::xor_r_rr(Register8 reg, RegisterPair pair) {
+	getReg8(reg) ^= memory[pair.full];
+
+	setFlag(FLAG_Z, (getReg8(reg) == 0));
+	setFlag(FLAG_N, false);
+	setFlag(FLAG_H, false);
+	setFlag(FLAG_C, false);
+}
+void CPU::or_r_r(Register8 reg1, Register8 reg2) {
+	getReg8(reg1) |= getReg8(reg2);
+
+	setFlag(FLAG_Z, (getReg8(reg1) == 0));
+	setFlag(FLAG_N, false);
+	setFlag(FLAG_H, false);
+	setFlag(FLAG_C, false);
+}
+void CPU::or_r_rr(Register8 reg, RegisterPair pair) {
+	getReg8(reg) |= memory[pair.full];
+
+	setFlag(FLAG_Z, (getReg8(reg) == 0));
+	setFlag(FLAG_N, false);
+	setFlag(FLAG_H, false);
+	setFlag(FLAG_C, false);
+}
+void CPU::cp_r_r(Register8 reg1, Register8 reg2) {
+	uint8_t result = getReg8(reg1) - getReg8(reg2);
+
+	setFlag(FLAG_Z, (getReg8(reg1) == 0));
+	setFlag(FLAG_N, true);
+	setFlag(FLAG_H, ((getReg8(reg1) & 0xF) < (getReg8(reg2) & 0xF))); // Borrow from bit 4
+	setFlag(FLAG_C, (getReg8(reg1) < getReg8(reg2)));
+}
+void CPU::cp_r_rr(Register8 reg, RegisterPair pair) {
+	uint8_t value = memory[pair.full];
+	uint8_t result = getReg8(reg) - value;
+
+	setFlag(FLAG_Z, (getReg8(reg) == 0));
+	setFlag(FLAG_N, true);
+	setFlag(FLAG_H, ((getReg8(reg) & 0xF) < (value & 0xF))); // Half carry check (borrow)
+	setFlag(FLAG_C, (getReg8(reg) < value));
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -372,7 +483,7 @@ bool CPU::LoadROM(std::string filename) {
 	if (file.is_open())
 	{
 		
-		std::cout << "Loading ROM..\n";
+		std::cout << "INFO: Loading ROM..\n";
 		// get size of file and allocate a buffer to hold the contents
 		std::streampos size = file.tellg();
 		char* buffer = new char[size];
@@ -385,7 +496,7 @@ bool CPU::LoadROM(std::string filename) {
 		file.read(buffer, size);
 		file.close();
 		if (size > 32768)
-			std::cout << "Careful, rom size is higher than 32768 bytes! MBC doing magic here.";
+			std::cout << "INFO: ROM size is higher than 32768 bytes (32KB)! MBC is going to do magic here.\n\n";
 
 		// load the rom into the gb's memory, starting at 0x0100 (256 bytes)
 		for (long i = 0; i < size; ++i)
@@ -636,10 +747,65 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 
 
-	case 0xAF: xor_a(REG_A); break;               // XOR A
-		// Add more using helper voids...
+	case 0x90: sub_r(REG_B); break;
+	case 0x91: sub_r(REG_C); break;
+	case 0x92: sub_r(REG_D); break;
+	case 0x93: sub_r(REG_E); break;
+	case 0x94: sub_r(REG_H); break;
+	case 0x95: sub_r(REG_L); break;
+	case 0x96: sub_rr(HL); break;
+	case 0x97: sub_r(REG_A); break;
+	case 0x98: sbc_r_r(REG_A, REG_B); break;
+	case 0x99: sbc_r_r(REG_A, REG_C); break;
+	case 0x9A: sbc_r_r(REG_A, REG_D); break;
+	case 0x9B: sbc_r_r(REG_A, REG_E); break;
+	case 0x9C: sbc_r_r(REG_A, REG_H); break;
+	case 0x9D: sbc_r_r(REG_A, REG_L); break;
+	case 0x9E: sbc_r_rr(REG_A, HL); break;
+	case 0x9F: sbc_r_r(REG_A, REG_A); break;
+
+
+
+	case 0xA0: and_r_r(REG_A, REG_B); break;
+	case 0xA1: and_r_r(REG_A, REG_C); break;
+	case 0xA2: and_r_r(REG_A, REG_D); break;
+	case 0xA3: and_r_r(REG_A, REG_E); break;
+	case 0xA4: and_r_r(REG_A, REG_H); break;
+	case 0xA5: and_r_r(REG_A, REG_L); break;
+	case 0xA6: and_r_rr(REG_A, HL); break;
+	case 0xA7: and_r_r(REG_A, REG_A); break;
+	case 0xA8: xor_r_r(REG_A, REG_B); break;
+	case 0xA9: xor_r_r(REG_A, REG_C); break;
+	case 0xAA: xor_r_r(REG_A, REG_D); break;
+	case 0xAB: xor_r_r(REG_A, REG_E); break;
+	case 0xAC: xor_r_r(REG_A, REG_H); break;
+	case 0xAD: xor_r_r(REG_A, REG_L); break;
+	case 0xAE: xor_r_rr(REG_A, HL); break;
+	case 0xAF: xor_r_r(REG_A, REG_A); break;       
+
+
+
+	case 0xB0: or_r_r(REG_A, REG_B); break;
+	case 0xB1: or_r_r(REG_A, REG_C); break;
+	case 0xB2: or_r_r(REG_A, REG_D); break;
+	case 0xB3: or_r_r(REG_A, REG_E); break;
+	case 0xB4: or_r_r(REG_A, REG_H); break;
+	case 0xB5: or_r_r(REG_A, REG_L); break;
+	case 0xB6: or_r_rr(REG_A, HL); break;
+	case 0xB7: or_r_r(REG_A, REG_A); break;
+	case 0xB8: cp_r_r(REG_A, REG_B); break;
+	case 0xB9: cp_r_r(REG_A, REG_C); break;
+	case 0xBA: cp_r_r(REG_A, REG_D); break;
+	case 0xBB: cp_r_r(REG_A, REG_E); break;
+	case 0xBC: cp_r_r(REG_A, REG_H); break;
+	case 0xBD: cp_r_r(REG_A, REG_L); break;
+	case 0xBE: cp_r_rr(REG_A, HL); break;
+	case 0xBF: cp_r_r(REG_A, REG_A); break;
+
+
+
 	default:
-		std::cerr << "Unknown opcode: 0x" << std::hex << (int)opcode << "\n";
+		std::cerr << "ERROR: Unknown opcode: 0x" << std::hex << (int)opcode << "\n";
 		break;
 	}
 }
@@ -650,7 +816,7 @@ void CPU::Cycle() {
 
 
 void CPU::d_PrintState() {
-	std::cout << "A: " << std::hex << (int)AF.hi
+	std::cout << "INFO: A: " << std::hex << (int)AF.hi
 		<< " B: " << (int)BC.hi
 		<< " C: " << (int)BC.lo
 		<< " D: " << (int)DE.hi

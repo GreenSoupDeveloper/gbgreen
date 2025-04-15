@@ -64,7 +64,7 @@ private:
     void ld_r_r(Register8 dest, Register8 src);
     void ld_rr_d16(RegisterPair& reg);
     void ld_addr_rr_a(RegisterPair& reg);
-    void xor_a(Register8 src);
+    void xor_r_r(Register8 reg1, Register8 reg2);
     void inc_rr(RegisterPair& reg);
     void inc_r(Register8 reg);
     void dec_r(Register8 reg);
@@ -94,6 +94,17 @@ private:
     void add_r_rr(Register8 reg, RegisterPair pair);
     void adc_r_r(Register8 reg1, Register8 reg2);
     void adc_r_rr(Register8 reg, RegisterPair pair);
+    void sub_r(Register8 reg);
+    void sub_rr(RegisterPair pair);
+    void sbc_r_r(Register8 reg1, Register8 reg2);
+    void sbc_r_rr(Register8 reg, RegisterPair pair);
+    void and_r_r(Register8 reg1, Register8 reg2);
+    void and_r_rr(Register8 reg, RegisterPair pair);
+    void xor_r_rr(Register8 reg, RegisterPair pair);
+    void or_r_r(Register8 reg1, Register8 reg2);
+    void or_r_rr(Register8 reg, RegisterPair pair);
+    void cp_r_r(Register8 reg1, Register8 reg2);
+    void cp_r_rr(Register8 reg, RegisterPair pair);
 public:
 
     CPU();
