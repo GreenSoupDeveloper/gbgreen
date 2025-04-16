@@ -1159,7 +1159,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x1D: dec_r(REG_E); break; // DEC E
 	case 0x1E: ld_r_n(REG_E, wram[PC++]); break; // LD E, d8
 	case 0x1F: rra(); break;
-
+		
 
 
 	case 0x20: // JR NZ, r8
@@ -1435,7 +1435,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 		break;
 	}
 
-	std::cout << "cycle: " << temp_t_cycles << " | total: "<< t_cycles << "\n";
+	//std::cout << "cycle: " << temp_t_cycles << " | total: "<< t_cycles << "\n";
 }
 void CPU::Cycle() {
 	if (halted) {

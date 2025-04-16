@@ -28,5 +28,6 @@ public:
 	bool LoadROM(std::string filename);
 	Cartridge();
 	~Cartridge();
+	std::string toHexString(const uint8_t* data, size_t length);
 };
 extern Cartridge cart;
