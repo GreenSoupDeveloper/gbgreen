@@ -6,16 +6,17 @@
 #include <iostream>
 #include <fstream>
 #include <stdint.h>
-#include <windows.h>
 #include <cpu.h>
 #include <tools.h>
 #include <emulator.h>;
-
+#include <cartridge.h>;
 
 CPU::~CPU() {}
+Cartridge::~Cartridge() {}
 CPU cpu;
 Tools tools;
 Emulator emu;
+Cartridge cart;
 
 
 
@@ -52,6 +53,9 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 		tools.readPaletteFile("palettes/Green.gbcp");
 	}
 	tools.RenderToDisplay("assets/title");
+	emu.running = true;
+	emu.paused = false;
+	emu.ticks = 0;
 	if (argc <= 1)
 	{
 		std::cerr << "Path to ROM to be loaded must be given as argument\nType -help to see usage\n";
@@ -59,7 +63,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 	}
 	else {
 
-		if (!cpu.LoadROM(argv[1])) //loading ROM provided as argument
+		if (!cart.LoadROM(argv[1])) //loading ROM provided as argument
 		{
 			std::cerr << "ROM could not be loaded. Possibly invalid path given\n";
 			emu.romLoaded = false;
@@ -68,6 +72,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 			emu.romLoaded = true;
 		}
 	}
+
 
 
 
@@ -94,7 +99,7 @@ void UpdatePixels() {
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
 
-	if (emu.emuMenuOpened) {
+	if (emu.paused) {
 		if (emu.menuItemOpened == 0) {
 			if (emu.menuItemSelected == 0)
 				tools.RenderToDisplay("assets/menu1_sel1");
@@ -107,7 +112,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 		}
 		else {
 			if (emu.menuItemSelected == 0) {
-				if (emu.menuItemOptionSelected == 0) 
+				if (emu.menuItemOptionSelected == 0)
 					tools.readPaletteFile("palettes/Monochrome.gbcp");
 				else if (emu.menuItemOptionSelected == 1)
 					tools.readPaletteFile("palettes/Green.gbcp");
@@ -126,9 +131,11 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
 	}
 	else {
-		tools.RenderToDisplay("assets/title");
-		emu.menuItemSelected = 0;
-		emu.menuItemOpened = 0;
+		if (!emu.romLoaded) {
+			tools.RenderToDisplay("assets/title");
+			emu.menuItemSelected = 0;
+			emu.menuItemOpened = 0;
+		}
 	}
 	if (emu.romLoaded) {
 		cpu.Cycle();
@@ -136,7 +143,8 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 	//cpu.d_PrintState();
 
 	UpdatePixels();
-	//Sleep(20);
+	SDL_Delay(1);
+	emu.ticks++;
 
 	return SDL_APP_CONTINUE;
 }
@@ -160,12 +168,12 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 	{
 		if (event->key.key == SDLK_ESCAPE)
 		{
-			if (emu.emuMenuOpened)
-				emu.emuMenuOpened = false;
+			if (emu.paused)
+				emu.paused = false;
 			else
-				emu.emuMenuOpened = true;
+				emu.paused = true;
 		}
-		if (emu.emuMenuOpened) {
+		if (emu.paused) {
 			if (event->key.key == SDLK_UP)
 			{
 				emu.menuItemSelected -= 1;
@@ -227,14 +235,14 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 
 				if (emu.menuItemSelected == 0) {
 					if (emu.menuItemOpened == 0)
-						emu.emuMenuOpened = false;
+						emu.paused = false;
 
 					//hi
 				}
 				else if (emu.menuItemSelected == 1) {
 					if (emu.menuItemOpened == 0) {
-						
-						if (!cpu.LoadROM("test.gb")) //loading ROM provided as argument
+
+						if (!cart.LoadROM("test.gb")) //loading ROM provided as argument
 						{
 							std::cerr << "ROM could not be loaded. Possibly invalid path given\n";
 							emu.romLoaded = false;
@@ -242,13 +250,13 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 						else {
 							emu.romLoaded = true;
 						}
-						emu.emuMenuOpened = false;
+						emu.paused = false;
 					}
 				}
 				else if (emu.menuItemSelected == 2) {
 					if (emu.menuItemOpened == 0) {
 						emu.menuItemOpened = 3;
-						emu.emuMenuOpened = true;
+						emu.paused = true;
 						emu.menuItemSelected = 0;
 						emu.menuItemOptionSelected = emu.selectedColorPallete;
 					}
@@ -257,7 +265,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 
 				else if (emu.menuItemSelected == 3) {
 					if (emu.menuItemOpened == 0) {
-						emu.emuMenuOpened = false;
+						emu.paused = false;
 						exit(0);
 					}
 				}

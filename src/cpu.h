@@ -10,10 +10,11 @@
 #include <string>
 #include <chrono>
 #include <random>
+#include <cartridge.h>
 class CPU
 {
 
-private:
+public:
     union RegisterPair {
         struct {
             uint8_t lo;
@@ -37,28 +38,42 @@ private:
     uint16_t SP, PC;
 
     // Memory (simplified, 64KB)
-    uint8_t memory[0x10000];
+    uint8_t wram[0x2000];   // 8KB Work RAM (0xC000–0xDFFF)
+    uint8_t vram[0x2000];   // 8KB Video RAM (0x8000–0x9FFF)
+    uint8_t eram[0x2000];   // 8KB External RAM (0xA000–0xBFFF)
+    uint8_t oam[0xA0];      // Object Attribute Memory (0xFE00–0xFE9F)
+    uint8_t hram[0x7F];     // High RAM (0xFF80–0xFFFE)
+    uint8_t io[0x80]; // I/O ports (0xFF00–0xFF7F)
+    uint8_t IE = 0x00;    // 0xFFFF
+    uint8_t IF = 0xE1;    // 0xFF0F
 
-    uint64_t cycles;
+    uint64_t temp_t_cycles;
+    uint64_t t_cycles;
+    uint64_t m_cycles;
     bool IME = false; // Interrupt Master Enable
     bool halted = false;
+    bool haltBug = false;
+    bool interrupts_enabled;
 
-    uint8_t& IF = memory[0xFF0F]; // Interrupt Flags
-    uint8_t& IE = memory[0xFFFF]; // Interrupt Enable
+   
     
 
     // Helpers
+
   
-    uint8_t& getReg8( Register8 reg);
+
+    void setFlag(Flag flag, bool value);
+    bool getFlag(Flag flag);
+
+    uint8_t ReadByte(uint16_t addr);
+    void Push16(uint16_t value);
+    void HandleInterrupt();
+    void ExecuteInstruction(uint8_t opcode);
+    uint8_t& getReg8(Register8 reg);
+    uint8_t readFromMem(uint16_t addr);
 
     void halt();
-
-    void setFlag( Flag flag, bool value);
-    bool getFlag( Flag flag);
-
-    void HandleInterrupt();
-
-    void ExecuteInstruction(uint8_t opcode);
+ 
     void ld_r_n(Register8 reg, uint8_t value);
     void ld_r_nn(Register8 reg, RegisterPair pair);
     void ld_r_r(Register8 dest, Register8 src);
@@ -105,7 +120,51 @@ private:
     void or_r_rr(Register8 reg, RegisterPair pair);
     void cp_r_r(Register8 reg1, Register8 reg2);
     void cp_r_rr(Register8 reg, RegisterPair pair);
-public:
+    void ret_nz();
+    void pop_rr(RegisterPair pair);
+    void jp_nz_a16();
+    void jp_a16();
+    void call_nz_a16();
+    void push_rr(RegisterPair pair);
+    void add_a_d8();
+    void rst_0();
+    void ret_z();
+    void ret();
+    void jp_z();
+    void call_z();
+    void call();
+    void adc_a_d8();
+    void rst_1();
+    void ret_nc();
+    void jp_nc_a16();
+    void call_nc_a16();
+    void sub_d8();
+    void rst_2();
+    void ret_c();
+    void reti();
+    void jp_c_a16();
+    void call_z_a16();
+    void sbc_a_d8();
+    void rst_3();
+    void ld_a_a8();
+    
+    void and_d8();
+    void rst_4();
+    void add_sp_s8();
+    void ld_a16_a();
+    void xor_d8();
+    void rst_5();
+    void ld_a8_a();
+    void ld_c_a();
+    void di();
+    void or_d8();
+    void rst_6();
+    void ld_hl_sp_s8();
+    void ld_a_a16();
+    void ei();
+    void cp_d8();
+    void rst_7();
+
 
     CPU();
     bool LoadROM(std::string filename);
