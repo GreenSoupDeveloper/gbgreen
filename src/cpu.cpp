@@ -4,9 +4,16 @@
 #include <cpu.h>
 #include <tools.h>
 #include <cartridge.h>
+#include <bus.h>
+#include <iomanip>
+
+
+
+
 CPU::CPU()
 {
-
+	//if its not bootrom
+	PC = 0x100; //is it 0x100 or 0x0ff?
 }
 //helper stuff here..
 
@@ -34,6 +41,7 @@ void CPU::halt() {
 		halted = true;
 	}
 	temp_t_cycles += 4;
+	std::cout << "HALTEDDDDDDDD!!!!\n";
 }
 
 void CPU::setFlag(Flag flag, bool value) {
@@ -52,7 +60,7 @@ void CPU::ld_r_n(Register8 reg, uint8_t value) {
 	temp_t_cycles += 8;
 }
 void CPU::ld_r_nn(Register8 reg, RegisterPair pair) {
-	getReg8(reg) = wram[pair.full];
+	getReg8(reg) = cart.rom_data[pair.full];
 	temp_t_cycles += 8;
 }
 
@@ -63,8 +71,8 @@ void CPU::ld_r_r(Register8 dest, Register8 src) {
 	temp_t_cycles += 4;
 }
 void CPU::ld_rr_d16(RegisterPair& reg) {
-	uint8_t lo = wram[PC++];
-	uint8_t hi = wram[PC++];
+	uint8_t lo = cart.rom_data[PC++];
+	uint8_t hi = cart.rom_data[PC++];
 	reg.lo = lo;
 	reg.hi = hi;
 	temp_t_cycles += 12;
@@ -89,14 +97,14 @@ void CPU::inc_rr(RegisterPair& reg) {
 	temp_t_cycles += 12;
 }
 void CPU::inc_r(Register8 reg) {
-	uint8_t& r = getReg8(reg);
-	uint8_t result = r + 1;
+	
+	uint8_t result = getReg8(reg) + 1;
 
 	setFlag(FLAG_Z, result == 0);
 	setFlag(FLAG_N, false);
-	setFlag(FLAG_H, (r & 0x0F) + 1 > 0x0F);
+	setFlag(FLAG_H, (getReg8(reg) & 0x0F) + 1 > 0x0F);
 
-	r = result;
+	getReg8(reg) = result;
 	temp_t_cycles += 4;
 }
 void CPU::dec_r(Register8 reg) {
@@ -127,8 +135,8 @@ void CPU::rlca() {
 	temp_t_cycles += 4;
 }
 void CPU::ld_a16_sp() {
-	uint8_t lo = wram[PC++];
-	uint8_t hi = wram[PC++];
+	uint8_t lo = cart.rom_data[PC++];
+	uint8_t hi = cart.rom_data[PC++];
 	uint16_t addr = (hi << 8) | lo;
 
 	wram[addr] = SP & 0xFF;       // low byte
@@ -147,7 +155,7 @@ void CPU::add_hl_rr(const RegisterPair& rr) {
 }
 void CPU::ld_a_addr_rr(const RegisterPair& reg) {
 	uint16_t address = reg.full;
-	AF.hi = wram[address];  // Load value at address pointed by reg into A
+	AF.hi = cart.rom_data[address];  // Load value at address pointed by reg into A
 	temp_t_cycles += 8;
 }
 void CPU::rrca() {
@@ -262,7 +270,7 @@ void CPU::cpl() {
 	temp_t_cycles += 4;
 }
 void CPU::inc_hl_ptr() {
-	uint8_t value = wram[HL.full];
+	uint8_t value = cart.rom_data[HL.full];
 	uint8_t result = value + 1;
 
 	// Set flags
@@ -274,7 +282,7 @@ void CPU::inc_hl_ptr() {
 	temp_t_cycles += 12;
 }
 void CPU::dec_hl_ptr() {
-	uint8_t value = wram[HL.full];
+	uint8_t value = cart.rom_data[HL.full];
 	uint8_t result = value - 1;
 
 	setFlag(FLAG_Z, result == 0);
@@ -285,13 +293,13 @@ void CPU::dec_hl_ptr() {
 	temp_t_cycles += 12;
 }
 void CPU::ld_hl_d8() {
-	uint8_t value = wram[PC + 1];  // Read immediate value
+	uint8_t value = cart.rom_data[PC + 1];  // Read immediate value
 	wram[HL.full] = value;         // Store it at address pointed by HL
 	PC += 2;                         // Advance PC (opcode + 1 byte)
 	temp_t_cycles += 12;
 }
 void CPU::jr_c_s8() {
-	int8_t offset = static_cast<int8_t>(wram[PC + 1]);
+	int8_t offset = static_cast<int8_t>(cart.rom_data[PC + 1]);
 	if (getFlag(FLAG_C)) {
 		PC += offset + 2;  // Include the size of the instruction
 		temp_t_cycles += 12;
@@ -312,7 +320,7 @@ void CPU::add_hl_sp() {
 	temp_t_cycles += 8;
 }
 void CPU::ld_a_hld() {
-	AF.hi = wram[HL.full];  // Load byte from wram at HL into A
+	AF.hi = cart.rom_data[HL.full];  // Load byte from wram at HL into A
 	HL.full--;            // Decrement HL after loading
 	temp_t_cycles += 8;
 }
@@ -347,7 +355,7 @@ void CPU::add_r_r(Register8 reg1, Register8 reg2) {
 	temp_t_cycles += 4;
 }
 void CPU::add_r_rr(Register8 reg, RegisterPair pair) {
-	uint8_t value = wram[pair.full];         // Load value from wram
+	uint8_t value = cart.rom_data[pair.full];         // Load value from wram
 	uint16_t result = getReg8(reg) + value;             // Add with potential overflow
 
 	// Update A with result
@@ -380,7 +388,7 @@ void CPU::adc_r_r(Register8 reg1, Register8 reg2) {
 	temp_t_cycles += 4;
 }
 void CPU::adc_r_rr(Register8 reg, RegisterPair pair) {
-	uint8_t value = wram[pair.full];
+	uint8_t value = cart.rom_data[pair.full];
 	uint8_t carry = getFlag(FLAG_C) ? 1 : 0;
 	uint16_t result = getReg8(reg) + value + carry;
 
@@ -405,7 +413,7 @@ void CPU::sub_r(Register8 reg) {
 	temp_t_cycles += 4;
 }
 void CPU::sub_rr(RegisterPair pair) {
-	uint8_t value = wram[pair.full];
+	uint8_t value = cart.rom_data[pair.full];
 	uint8_t result = getReg8(REG_A) - value;
 
 	setFlag(FLAG_Z, (result == 0));
@@ -428,7 +436,7 @@ void CPU::sbc_r_r(Register8 reg1, Register8 reg2) {
 	temp_t_cycles += 4;
 }
 void CPU::sbc_r_rr(Register8 reg, RegisterPair pair) {
-	uint8_t value = wram[pair.full];
+	uint8_t value = cart.rom_data[pair.full];
 	uint8_t carry = getFlag(FLAG_C) ? 1 : 0;
 	uint16_t result = getReg8(reg) - value - carry;
 
@@ -448,7 +456,7 @@ void CPU::and_r_r(Register8 reg1, Register8 reg2) {
 	temp_t_cycles += 4;
 }
 void CPU::and_r_rr(Register8 reg, RegisterPair pair) {
-	uint8_t value = wram[pair.full];
+	uint8_t value = cart.rom_data[pair.full];
 	getReg8(reg) &= value;
 
 	setFlag(FLAG_Z, (getReg8(reg) == 0));
@@ -458,7 +466,7 @@ void CPU::and_r_rr(Register8 reg, RegisterPair pair) {
 	temp_t_cycles += 8;
 }
 void CPU::xor_r_rr(Register8 reg, RegisterPair pair) {
-	getReg8(reg) ^= wram[pair.full];
+	getReg8(reg) ^= cart.rom_data[pair.full];
 
 	setFlag(FLAG_Z, (getReg8(reg) == 0));
 	setFlag(FLAG_N, false);
@@ -476,7 +484,7 @@ void CPU::or_r_r(Register8 reg1, Register8 reg2) {
 	temp_t_cycles += 4;
 }
 void CPU::or_r_rr(Register8 reg, RegisterPair pair) {
-	getReg8(reg) |= wram[pair.full];
+	getReg8(reg) |= cart.rom_data[pair.full];
 
 	setFlag(FLAG_Z, (getReg8(reg) == 0));
 	setFlag(FLAG_N, false);
@@ -494,7 +502,7 @@ void CPU::cp_r_r(Register8 reg1, Register8 reg2) {
 	temp_t_cycles += 4;
 }
 void CPU::cp_r_rr(Register8 reg, RegisterPair pair) {
-	uint8_t value = wram[pair.full];
+	uint8_t value = cart.rom_data[pair.full];
 	uint8_t result = getReg8(reg) - value;
 
 	setFlag(FLAG_Z, (getReg8(reg) == 0));
@@ -518,8 +526,8 @@ void CPU::pop_rr(RegisterPair pair) {
 }
 void CPU::jp_nz_a16() {
 	if (!getFlag(FLAG_Z)) {
-		uint8_t low = wram[PC++];
-		uint8_t high = wram[PC++];
+		uint8_t low = cart.rom_data[PC++];
+		uint8_t high = cart.rom_data[PC++];
 		PC = (high << 8) | low;
 		temp_t_cycles += 16; // Extra temp_t_cycles for jumping
 	}
@@ -528,14 +536,14 @@ void CPU::jp_nz_a16() {
 	}
 }
 void CPU::jp_a16() {
-	uint8_t low = wram[PC++];
-	uint8_t high = wram[PC++];
+	uint8_t low = cart.rom_data[PC++];
+	uint8_t high = cart.rom_data[PC++];
 	PC = (high << 8) | low;
 	temp_t_cycles += 16;
 }
 void CPU::call_nz_a16() {
-	uint8_t low = wram[PC++];
-	uint8_t high = wram[PC++];
+	uint8_t low = cart.rom_data[PC++];
+	uint8_t high = cart.rom_data[PC++];
 	uint16_t addr = (high << 8) | low;
 
 	if (!getFlag(FLAG_Z)) {
@@ -559,7 +567,7 @@ void CPU::push_rr(RegisterPair pair) {
 
 }
 void CPU::add_a_d8() {
-	uint8_t value = wram[PC++];
+	uint8_t value = cart.rom_data[PC++];
 	uint16_t result = getReg8(REG_A) + value;
 
 	// Flags
@@ -600,7 +608,7 @@ void CPU::ret() {
 	temp_t_cycles += 16;
 }
 void CPU::jp_z() {
-	uint16_t address = wram[PC++];
+	uint16_t address = cart.rom_data[PC++];
 	address |= (wram[PC++] << 8);
 
 	if (!getFlag(FLAG_Z)) {
@@ -612,7 +620,7 @@ void CPU::jp_z() {
 	}
 }
 void CPU::call_z() {
-	uint16_t address = wram[PC++];
+	uint16_t address = cart.rom_data[PC++];
 	address |= (wram[PC++] << 8);
 
 	if (!getFlag(FLAG_Z)) {
@@ -627,7 +635,7 @@ void CPU::call_z() {
 	}
 }
 void CPU::call() {
-	uint16_t address = wram[PC++];
+	uint16_t address = cart.rom_data[PC++];
 	address |= (wram[PC++] << 8);
 
 	// Push current PC (after this instruction) onto the stack
@@ -638,7 +646,7 @@ void CPU::call() {
 	temp_t_cycles += 24;
 }
 void CPU::adc_a_d8() {
-	uint8_t d8 = wram[PC++];
+	uint8_t d8 = cart.rom_data[PC++];
 	uint16_t result = getReg8(REG_A) + d8 + (getFlag(FLAG_C) ? 1 : 0);
 
 	// Set the Zero flag if the result is 0
@@ -680,7 +688,7 @@ void CPU::ret_nc() {
 	}
 }
 void CPU::jp_nc_a16() {
-	uint16_t addr = wram[PC + 1] | (wram[PC + 2] << 8);
+	uint16_t addr = cart.rom_data[PC + 1] | (wram[PC + 2] << 8);
 
 	if (!getFlag(FLAG_C)) {
 		PC = addr;
@@ -692,7 +700,7 @@ void CPU::jp_nc_a16() {
 	}
 }
 void CPU::call_nc_a16() {
-	uint16_t addr = wram[PC + 1] | (wram[PC + 2] << 8);
+	uint16_t addr = cart.rom_data[PC + 1] | (wram[PC + 2] << 8);
 
 	if (!getFlag(FLAG_C)) {
 		uint16_t returnAddr = PC + 3;
@@ -707,7 +715,7 @@ void CPU::call_nc_a16() {
 	}
 }
 void CPU::sub_d8() {
-	uint8_t value = wram[PC + 1];
+	uint8_t value = cart.rom_data[PC + 1];
 	uint8_t result = getReg8(REG_A) - value;
 
 	setFlag(FLAG_Z, (result == 0));
@@ -748,7 +756,7 @@ void CPU::reti() {
 	temp_t_cycles += 16;
 }
 void CPU::jp_c_a16() {
-	uint16_t address = wram[PC + 1] | (wram[PC + 2] << 8);
+	uint16_t address = cart.rom_data[PC + 1] | (wram[PC + 2] << 8);
 	if (!getFlag(FLAG_C)) {
 		PC = address;
 		temp_t_cycles += 16;
@@ -759,7 +767,7 @@ void CPU::jp_c_a16() {
 	}
 }
 void CPU::call_z_a16() {
-	uint16_t address = wram[PC + 1] | (wram[PC + 2] << 8);
+	uint16_t address = cart.rom_data[PC + 1] | (wram[PC + 2] << 8);
 	if (!getFlag(FLAG_Z)) {
 		uint16_t returnAddress = PC + 3;
 		wram[--SP] = (returnAddress >> 8) & 0xFF;
@@ -773,7 +781,7 @@ void CPU::call_z_a16() {
 	}
 }
 void CPU::sbc_a_d8() {
-	uint8_t value = wram[PC + 1];
+	uint8_t value = cart.rom_data[PC + 1];
 	uint8_t carry = getFlag(FLAG_C) ? 1 : 0;
 	uint16_t result = getReg8(REG_A) - value - carry;
 
@@ -796,7 +804,7 @@ void CPU::rst_3() {
 	temp_t_cycles += 16;
 }
 void CPU::ld_a_a8() {
-	uint16_t address = wram[PC + 1] | (wram[PC + 2] << 8);
+	uint16_t address = cart.rom_data[PC + 1] | (wram[PC + 2] << 8);
 	wram[address] = getReg8(REG_A);
 
 	PC += 3;
@@ -804,7 +812,7 @@ void CPU::ld_a_a8() {
 }
 
 void CPU::and_d8() {
-	uint8_t value = wram[PC + 1];
+	uint8_t value = cart.rom_data[PC + 1];
 	getReg8(REG_A) &= value;
 
 	setFlag(FLAG_Z, (getReg8(REG_A) == 0));
@@ -824,7 +832,7 @@ void CPU::rst_4() {
 	temp_t_cycles += 16;
 }
 void CPU::add_sp_s8() {
-	int8_t offset = static_cast<int8_t>(wram[PC + 1]); // Read the signed 8-bit immediate value
+	int8_t offset = static_cast<int8_t>(cart.rom_data[PC + 1]); // Read the signed 8-bit immediate value
 	uint16_t result = SP + offset;
 
 	// Update the flags
@@ -845,7 +853,7 @@ void CPU::ld_a16_a() {
 	temp_t_cycles += 16;  // Add the number of temp_t_cycles for this instruction
 }
 void CPU::xor_d8() {
-	uint8_t immediate = wram[PC + 1];  // Fetch the immediate byte (d8)
+	uint8_t immediate = cart.rom_data[PC + 1];  // Fetch the immediate byte (d8)
 	getReg8(REG_A) ^= immediate;  // Perform XOR between A and d8
 
 	// Set flags
@@ -870,14 +878,14 @@ void CPU::rst_5() {
 }
 void CPU::ld_a8_a() {
 	uint16_t address = (wram[PC + 1] << 8) | wram[PC + 2];  // Get the 16-bit address (a8)
-	getReg8(REG_A) = wram[address];  // Load the value from wram at address a8 into A
+	getReg8(REG_A) = cart.rom_data[address];  // Load the value from wram at address a8 into A
 
 	PC += 3;  // Move the program counter to the next instruction
 	temp_t_cycles += 13;  // Add the number of temp_t_cycles for this instruction
 }
 void CPU::ld_c_a() {
 	uint16_t address = 0xFF00 + getFlag(FLAG_C);  // Calculate the wram address 0xFF00 + C
-	getReg8(REG_A) = wram[address];  // Load the value at the address into A
+	getReg8(REG_A) = cart.rom_data[address];  // Load the value at the address into A
 
 	PC += 1;  // Move the program counter to the next instruction
 	temp_t_cycles += 8;  // Add the number of temp_t_cycles for this instruction
@@ -889,7 +897,7 @@ void CPU::di() {
 	temp_t_cycles += 4;  // Add the number of temp_t_cycles for this instruction
 }
 void CPU::or_d8() {
-	uint8_t d8 = wram[PC + 1];  // Get the immediate byte d8
+	uint8_t d8 = cart.rom_data[PC + 1];  // Get the immediate byte d8
 	getReg8(REG_A) |= d8;  // Perform bitwise OR between A and d8
 
 	// Set the flags based on the result
@@ -912,7 +920,7 @@ void CPU::rst_6() {
 	temp_t_cycles += 16;  // Add the number of temp_t_cycles for this instruction
 }
 void CPU::ld_hl_sp_s8() {
-	int8_t s8 = wram[PC + 1];  // Get the signed 8-bit immediate value s8
+	int8_t s8 = cart.rom_data[PC + 1];  // Get the signed 8-bit immediate value s8
 	uint16_t result = SP + s8;   // Add the signed immediate value to the SP
 
 	HL.full = result;  // Store the result in the HL register pair
@@ -928,10 +936,10 @@ void CPU::ld_hl_sp_s8() {
 }
 void CPU::ld_a_a16() {
 	// Fetch the 16-bit address from the next two bytes in wram
-	uint16_t address = wram[PC + 1] | (wram[PC + 2] << 8);
+	uint16_t address = cart.rom_data[PC + 1] | (wram[PC + 2] << 8);
 
 	// Load the value from wram at the given address into the A register
-	getReg8(REG_A) = wram[address];
+	getReg8(REG_A) = cart.rom_data[address];
 
 	// Increment the PC to move past the 3 bytes of this instruction
 	PC += 3;
@@ -945,7 +953,7 @@ void CPU::ei() {
 	PC += 1;      // Move the program counter to the next instruction
 }
 void CPU::cp_d8() {
-	uint8_t value = wram[PC + 1];  // Fetch the immediate byte d8
+	uint8_t value = cart.rom_data[PC + 1];  // Fetch the immediate byte d8
 
 	// Subtract the value from A, but don't store the result in A
 	uint16_t result = getReg8(REG_A) - value;
@@ -1029,47 +1037,6 @@ void CPU::rst_7() {
 
 //main cpu stuff here now yay
 
-
-
-uint8_t CPU::ReadByte(uint16_t addr) {
-	if (addr >= 0xFF00 && addr <= 0xFF7F)
-		return io[addr - 0xFF00];
-	// ... rest of wram access logic
-}
-
-
-uint8_t CPU::readFromMem(uint16_t addr) {
-	if (addr <= 0x7FFF) {
-		return cart.rom_data[addr]; // ROM region
-	}
-	else if (addr >= 0x8000 && addr <= 0x9FFF) {
-		return vram[addr - 0x8000];
-	}
-	else if (addr >= 0xA000 && addr <= 0xBFFF) {
-		return eram[addr - 0xA000];
-	}
-	else if (addr >= 0xC000 && addr <= 0xDFFF) {
-		return wram[addr - 0xC000];
-	}
-	else if (addr >= 0xE000 && addr <= 0xFDFF) {
-		return wram[addr - 0xE000]; // Echo of 0xC000–0xDDFF
-	}
-	else if (addr >= 0xFE00 && addr <= 0xFE9F) {
-		return oam[addr - 0xFE00];
-	}
-	else if (addr >= 0xFF00 && addr <= 0xFF7F) {
-		return io[addr - 0xFF00];
-	}
-	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
-		return hram[addr - 0xFF80];
-	}
-	/*else if (addr == 0xFFFF) {
-		return interrupt_enable;
-	}*/
-	return 0xFF; // Unusable or unimplemented area
-}
-
-
 void CPU::Push16(uint16_t value) {
 	SP--;
 	wram[SP] = (value >> 8) & 0xFF;
@@ -1117,6 +1084,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	if (size > 0x10000) {
 		//std::cerr << "ERROR: wram Overflow!!" << "\n";
 	}
+	printf("Executing instruction: %02X  PC: %04X\n", opcode, PC);
 
 	switch (opcode) {
 	case 0x00: PC++; temp_t_cycles += 4; break; // NOP
@@ -1148,7 +1116,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x17: rla(); break; // RLA
 	case 0x18: // JR r8
 	{
-		int8_t r8 = static_cast<int8_t>(wram[PC + 1]); // Read the signed byte at PC + 1
+		int8_t r8 = static_cast<int8_t>(cart.rom_data[PC + 1]); // Read the signed byte at PC + 1
 		jr(r8);
 
 	}
@@ -1159,12 +1127,12 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x1D: dec_r(REG_E); break; // DEC E
 	case 0x1E: ld_r_n(REG_E, wram[PC++]); break; // LD E, d8
 	case 0x1F: rra(); break;
-		
+
 
 
 	case 0x20: // JR NZ, r8
 	{
-		int8_t r8 = static_cast<int8_t>(wram[PC + 1]); // Read the signed byte at PC + 1
+		int8_t r8 = static_cast<int8_t>(cart.rom_data[PC + 1]); // Read the signed byte at PC + 1
 		jr_nz(r8);
 
 		break;
@@ -1176,9 +1144,9 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x25: dec_r(REG_H); break; // DEC D
 	case 0x26: ld_r_n(REG_H, wram[PC++]); break; // LD D, d8
 	case 0x27: daa(); break;
-	case 0x28: jr_z(static_cast<int8_t>(wram[PC + 1])); break;
+	case 0x28: jr_z(static_cast<int8_t>(cart.rom_data[PC + 1])); break;
 	case 0x29: add_hl_rr(HL); break; // ADD HL, HL
-	case 0x2A: AF.hi = wram[HL.full]; HL.full++; temp_t_cycles += 8;break;
+	case 0x2A: AF.hi = cart.rom_data[HL.full]; HL.full++; temp_t_cycles += 8;break;
 	case 0x2B: dec_rr(HL); break; // DEC HL
 	case 0x2C: inc_r(REG_L); break; // INC L
 	case 0x2D: dec_r(REG_L); break; // DEC L
@@ -1187,8 +1155,8 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 
 
-	case 0x30: jr_nc(static_cast<int8_t>(wram[PC + 1])); break;
-	case 0x31: SP = wram[PC + 1] | (wram[PC + 2] << 8); PC += 3; temp_t_cycles += 12; break; // LD DE,d16
+	case 0x30: jr_nc(static_cast<int8_t>(cart.rom_data[PC + 1])); break;
+	case 0x31: SP = cart.rom_data[PC + 1] | (wram[PC + 2] << 8); PC += 3; temp_t_cycles += 12; break; // LD DE,d16
 	case 0x32: wram[HL.full] = AF.hi; HL.full--; temp_t_cycles += 8; break; // LD (DE),A
 	case 0x33: SP++; temp_t_cycles += 8; break; // INC DE
 	case 0x34: inc_hl_ptr(); break; // INC D
@@ -1435,7 +1403,6 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 		break;
 	}
 
-	//std::cout << "cycle: " << temp_t_cycles << " | total: "<< t_cycles << "\n";
 }
 void CPU::Cycle() {
 	if (halted) {
@@ -1449,14 +1416,12 @@ void CPU::Cycle() {
 		return;
 	}
 
-	uint8_t opcode = readFromMem(PC++);
+	uint8_t opcode = bus.bus_read(PC);
 	if (haltBug) {
-		// Don't increment PC on this instruction
-		opcode = readFromMem(PC++);
-		haltBug = false;
+		haltBug = false; // bug is consumed, no PC increment
 	}
 	else {
-		opcode = readFromMem(PC++);
+		PC++;
 	}
 	temp_t_cycles = 0; // Reset before instruction
 	ExecuteInstruction(opcode);

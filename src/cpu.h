@@ -76,7 +76,7 @@ public:
     void HandleInterrupt();
     void ExecuteInstruction(uint8_t opcode);
     uint8_t& getReg8(Register8 reg);
-    uint8_t readFromMem(uint16_t addr);
+    
 
     void halt();
  

@@ -10,6 +10,7 @@
 #include <tools.h>
 #include <emulator.h>;
 #include <cartridge.h>;
+#include <bus.h>
 
 CPU::~CPU() {}
 Cartridge::~Cartridge() {}
@@ -17,7 +18,7 @@ CPU cpu;
 Tools tools;
 Emulator emu;
 Cartridge cart;
-
+Bus bus;
 
 
 /* Called once at startup */
