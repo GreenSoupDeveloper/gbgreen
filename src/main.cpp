@@ -11,14 +11,17 @@
 #include <emulator.h>;
 #include <cartridge.h>;
 #include <bus.h>
+#include <instructions.h>
 
 CPU::~CPU() {}
 Cartridge::~Cartridge() {}
+Instruction::~Instruction() {}
 CPU cpu;
 Tools tools;
 Emulator emu;
 Cartridge cart;
 Bus bus;
+Instruction insts;
 
 
 /* Called once at startup */
@@ -41,6 +44,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 	emu.texture = SDL_CreateTexture(emu.renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, emu.gbResX, emu.gbResY);
 	SDL_SetTextureScaleMode(emu.texture, SDL_SCALEMODE_NEAREST);
+
 
 	if (!emu.texture) {
 		SDL_Log("Failed to create texture: %s", SDL_GetError());

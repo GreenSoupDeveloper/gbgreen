@@ -25,25 +25,25 @@ uint8_t Bus::bus_read(uint16_t addr) {
 		return cart.rom_data[addr]; // ROM region
 	}
 	else if (addr >= 0x8000 && addr <= 0x9FFF) {
-		return cpu.vram[addr - 0x8000];
+		return vram[addr - 0x8000];
 	}
 	else if (addr >= 0xA000 && addr <= 0xBFFF) {
-		return cpu.eram[addr - 0xA000];
+		return eram[addr - 0xA000];
 	}
 	else if (addr >= 0xC000 && addr <= 0xDFFF) {
-		return cpu.wram[addr - 0xC000];
+		return wram[addr - 0xC000];
 	}
 	else if (addr >= 0xE000 && addr <= 0xFDFF) {
-		return cpu.wram[addr - 0xE000]; // Echo of 0xC000–0xDDFF
+		return wram[addr - 0xE000]; // Echo of 0xC000–0xDDFF
 	}
 	else if (addr >= 0xFE00 && addr <= 0xFE9F) {
-		return cpu.oam[addr - 0xFE00];
+		return oam[addr - 0xFE00];
 	}
 	else if (addr >= 0xFF00 && addr <= 0xFF7F) {
-		return cpu.io[addr - 0xFF00];
+		return io[addr - 0xFF00];
 	}
 	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
-		return cpu.hram[addr - 0xFF80];
+		return hram[addr - 0xFF80];
 	}
 	/*else if (addr == 0xFFFF) {
 		return interrupt_enable;
