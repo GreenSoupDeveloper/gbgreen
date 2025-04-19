@@ -65,7 +65,7 @@ public:
     void ld_r_n(Register8 reg, uint8_t value);
     void rlc_r(Register8 reg);
     void ld_a16_sp();
-    void add_hl_rr(const CPU::RegisterPair& rr);
+    void add_hl_rr(const uint16_t rr);
     void ld_a_addr_rr(CPU::RegisterPair& reg, int decOrInc);
     void rrc(Register8 reg);
     void rla();
@@ -74,6 +74,17 @@ public:
     void jr_f(int8_t r8, CPU::Flag flag, bool ifNot);
     void daa();
     void cpl();
+    void ld_r_r(Register8 dest, Register8 src);
+    void ld_r_rr(Register8 reg, CPU::RegisterPair pair);
+    void ld_rr_r(CPU::RegisterPair pair, Register8 reg);
+    void add_r_r(Register8 reg1, Register8 reg2);
+    void add_r_rr(Register8 reg, CPU::RegisterPair pair);
+    void adc_r_r(Register8 reg1, Register8 reg2);
+    void adc_r_rr(Register8 reg, CPU::RegisterPair pair);
+    void sub_r(Register8 reg);
+    void sub_rr(CPU::RegisterPair pair);
+    void sbc_r_r(Register8 reg1, Register8 reg2);
+    void sbc_r_rr(Register8 reg, CPU::RegisterPair pair);
 
 
     ~Instruction();

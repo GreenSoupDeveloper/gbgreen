@@ -125,7 +125,7 @@ void CPU::HandleInterrupt() {
 
 
 void CPU::ExecuteInstruction(uint8_t opcode) {
-
+	uint8_t value, result;
 	size_t size = sizeof(cart.rom_data);
 	//std::cout << "wram Used: " << size << "\n";
 	if (size > 0x10000) {
@@ -146,7 +146,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x06: insts.ld_r_n(insts.REG_B, bus.bus_read(PC++)); break; // LD B, n
 	case 0x07: insts.rlc_r(insts.REG_A); break; // RLCA
 	case 0x08: insts.ld_a16_sp(); break; // LD (nn), SP
-	case 0x09: insts.add_hl_rr(BC); break; // ADD HL, BC
+	case 0x09: insts.add_hl_rr(BC.full); break; // ADD HL, BC
 	case 0x0A: insts.ld_a_addr_rr(BC, 0); break; // LD A, (BC)
 	case 0x0B: BC.full--; break; // DEC BC
 	case 0x0C: insts.inc_r(insts.REG_C); break; // INC C
@@ -155,7 +155,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x0F: insts.rrc(insts.REG_A); break; // RRCA
 
 
-	
+
 	case 0x10: break; //STOP
 	case 0x11: insts.ld_rr_d16(DE); break; // LD DE, nn
 	case 0x12: insts.ld_addr_rr_a(DE, 0); break; // LD (DE), A
@@ -165,7 +165,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x16: insts.ld_r_n(insts.REG_D, bus.bus_read(PC++)); break; // LD D, n
 	case 0x17: insts.rla(); break; // RLA
 	case 0x18: insts.jr_n(); break; // JR nn
-	case 0x19: insts.add_hl_rr(DE); break; // ADD HL, DE
+	case 0x19: insts.add_hl_rr(DE.full); break; // ADD HL, DE
 	case 0x1A: insts.ld_a_addr_rr(DE, 0); break; // LD A, (DE)
 	case 0x1B: DE.full--; break; // DEC DE
 	case 0x1C: insts.inc_r(insts.REG_E); break; // INC E
@@ -184,7 +184,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x26: insts.ld_r_n(insts.REG_H, bus.bus_read(PC++)); break; // LD H, n
 	case 0x27: insts.daa(); break; // DAA
 	case 0x28: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; // JR Z, *
-	case 0x29: insts.add_hl_rr(HL); break; // ADD HL, HL
+	case 0x29: insts.add_hl_rr(HL.full); break; // ADD HL, HL
 	case 0x2A: insts.ld_a_addr_rr(HL, 1); break; // LD A, (HL+)
 	case 0x2B: HL.full--; break; // DEC HL
 	case 0x2C: insts.inc_r(insts.REG_L); break; // INC L
@@ -196,626 +196,414 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 	case 0x30: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, true); break; // JR NC, *
 	case 0x31: SP = Read16(PC + 1); PC += 3; break; // LD SP, nn
-	/*
-	case 0x30:  // JR NC, *
-		jump_add(!registers->is_flag_set(FLAG_CARRY));
-		break;
-	case 0x31:  // LD SP, nn
-		registers->sp = mmu->read_short(registers->pc);
-		registers->pc += 2;
-		break;
-	case 0x32:  // LD (HLD), A | LD (HL-), A | LDD (HL), A
-		mmu->write_byte(registers->hl--, registers->a);
-		break;
-	case 0x33:  // INC SP
-		registers->sp++;
-		break;
-	case 0x35:  // DEC (HL)
-	{
-		uint8_t tmp_val = mmu->read_byte(registers->hl);
-		dec(&tmp_val);
-		mmu->write_byte(registers->hl, tmp_val);
-		break;
-	}
-	case 0x34:  // INC (HL)
-	{
-		uint8_t tmp_val = mmu->read_byte(registers->hl);
-		inc(&tmp_val);
-		mmu->write_byte(registers->hl, tmp_val);
-		break;
-	}
-	case 0x36:  // LD (HL), n
-		mmu->write_byte(registers->hl, mmu->read_byte(registers->pc++));
-		break;
-	case 0x37:  // SCF
-		registers->set_flags(FLAG_CARRY, true);
-		registers->set_flags(FLAG_SUBTRACT | FLAG_HALF_CARRY, false);
-		break;
-	case 0x38:  // JR C, *
-		jump_add(registers->is_flag_set(FLAG_CARRY));
-		break;
-	case 0x39:  // ADD HL, SP
-		add(&registers->hl, registers->sp);
-		break;
-	case 0x3A:  // LD A, (HL-)
-		registers->a = mmu->read_byte(registers->hl--);
-		break;
-	case 0x3B:  // DEC SP
-		registers->sp--;
-		break;
-	case 0x3C:  // INC A
-		inc(&registers->a);
-		break;
-	case 0x3D:  // DEC A
-		dec(&registers->a);
-		break;
-	case 0x3E:  // LD A, n
-		registers->a = mmu->read_byte(registers->pc++);
-		break;
-	case 0x3F:  // CCF
-		registers->set_flags(FLAG_CARRY, !registers->is_flag_set(FLAG_CARRY));
+	case 0x32: insts.ld_addr_rr_a(HL, -1); break; // LD (HL-), A
+	case 0x33: SP++; break; // INC SP
+	case 0x34: value = bus.bus_read(HL.full); result = value + 1; insts.setFlag(cpu.FLAG_Z, result == 0); insts.setFlag(cpu.FLAG_N, false); insts.setFlag(cpu.FLAG_H, (value & 0x0F) + 1 > 0x0F); bus.bus_write(HL.full, result); break; // INC (HL)
+	case 0x35: value = bus.bus_read(HL.full); result = value - 1; insts.setFlag(cpu.FLAG_Z, result == 0); insts.setFlag(cpu.FLAG_N, true); insts.setFlag(cpu.FLAG_H, (value & 0x0F) == 0x00); bus.bus_write(HL.full, result); break;// DEC (HL)
+	case 0x36: value = bus.bus_read(PC + 1); bus.bus_write(HL.full, value); PC += 2; break; // LD (HL), n
+	case 0x37: insts.setFlag(FLAG_C, true); insts.setFlag(FLAG_N, false); insts.setFlag(FLAG_H, false); break; // SCF
+	case 0x38: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, false); break; // JR C, *
+	case 0x39: insts.add_hl_rr(SP); break; // ADD HL, SP
+	case 0x3A: insts.ld_a_addr_rr(HL, -1); break; // LD A, (HL-)
+	case 0x3B: SP--; break; // DEC SP
+	case 0x3C: insts.inc_r(insts.REG_A); break; // INC L
+	case 0x3D: insts.dec_r(insts.REG_A); break; // DEC L
+	case 0x3E: insts.ld_r_n(insts.REG_A, bus.bus_read(PC++)); break; // LD L, n
+	case 0x3F: insts.setFlag(FLAG_N, false); insts.setFlag(FLAG_H, false); insts.setFlag(FLAG_C, !insts.getFlag(FLAG_C)); break; // CCF
 
-		registers->set_flags(FLAG_SUBTRACT | FLAG_HALF_CARRY, false);
-		break;
-	case 0x40:  // LD B, B
-		break;
-	case 0x41:  // LD B, C
-		registers->b = registers->c;
-		break;
-	case 0x42:  // LD B, D
-		registers->b = registers->d;
-		break;
-	case 0x43:  // LD B, E
-		registers->b = registers->e;
-		break;
-	case 0x44:  // LD B, H
-		registers->b = registers->h;
-		break;
-	case 0x45:  // LD B, L
-		registers->b = registers->l;
-		break;
-	case 0x46:  // LD B, (HL)
-		registers->b = mmu->read_byte(registers->hl);
-		break;
-	case 0x47:  // LD B, A
-		registers->b = registers->a;
-		break;
-	case 0x48:  // LD C, B
-		registers->c = registers->b;
-		break;
-	case 0x49:  // LD C, C
-		break;
-	case 0x4A:  // LD C, D
-		registers->c = registers->d;
-		break;
-	case 0x4B:  // LD C, E
-		registers->c = registers->e;
-		break;
-	case 0x4C:  // LD C, H
-		registers->c = registers->h;
-		break;
-	case 0x4D:  // LD C, L
-		registers->c = registers->l;
-		break;
-	case 0x4E:  // LD C, (HL)
-		registers->c = mmu->read_byte(registers->hl);
-		break;
-	case 0x4F:  // LD C, A
-		registers->c = registers->a;
-		break;
-	case 0x50:  // LD D, B
-		registers->d = registers->b;
-		break;
-	case 0x51:  // LD D, C
-		registers->d = registers->c;
-		break;
-	case 0x52:  // LD D, D
-		break;
-	case 0x53:  // LD D, E
-		registers->d = registers->e;
-		break;
-	case 0x54:  // LD D, H
-		registers->d = registers->h;
-		break;
-	case 0x55:  // LD D, L
-		registers->d = registers->l;
-		break;
-	case 0x56:  // LD D, (HL)
-		registers->d = mmu->read_byte(registers->hl);
-		break;
-	case 0x57:  // LD D, A
-		registers->d = registers->a;
-		break;
-	case 0x58:  // LD E, B
-		registers->e = registers->b;
-		break;
-	case 0x59:  // LD E, C
-		registers->e = registers->c;
-		break;
-	case 0x5A:  // LD E, D
-		registers->e = registers->d;
-		break;
-	case 0x5B:  // LD E, E
-		break;
-	case 0x5C:  // LD E, H
-		registers->e = registers->h;
-		break;
-	case 0x5D:  // LD E, L
-		registers->e = registers->l;
-		break;
-	case 0x5E:  // LD E, (HL)
-		registers->e = mmu->read_byte(registers->hl);
-		break;
-	case 0x5F:  // LD E, A
-		registers->e = registers->a;
-		break;
-	case 0x60:  // LD H, B
-		registers->h = registers->b;
-		break;
-	case 0x61:  // LD H, C
-		registers->h = registers->c;
-		break;
-	case 0x62:  // LD H, D
-		registers->h = registers->d;
-		break;
-	case 0x63:  // LD H, E
-		registers->h = registers->e;
-		break;
-	case 0x64:  // LD H, H
-		break;
-	case 0x65:  // LD H, L
-		registers->h = registers->l;
-		break;
-	case 0x66:  // LD H, (HL)
-		registers->h = mmu->read_byte(registers->hl);
-		break;
-	case 0x67:  // LD H, A
-		registers->h = registers->a;
-		break;
-	case 0x68:  // LD L, B
-		registers->l = registers->b;
-		break;
-	case 0x69:  // LD L, C
-		registers->l = registers->c;
-		break;
-	case 0x6A:  // LD L, D
-		registers->l = registers->d;
-		break;
-	case 0x6B:  // LD L, E
-		registers->l = registers->e;
-		break;
-	case 0x6C:  // LD L, H
-		registers->l = registers->h;
-		break;
-	case 0x6D:  // LD L, L
-		break;
-	case 0x6E:  // LD L, (HL)
-		registers->l = mmu->read_byte(registers->hl);
-		break;
-	case 0x6F:  // LD L, A
-		registers->l = registers->a;
-		break;
-	case 0x70:  // LD (HL), B
-		mmu->write_byte(registers->hl, registers->b);
-		break;
-	case 0x71:  // LD (HL), C
-		mmu->write_byte(registers->hl, registers->c);
-		break;
-	case 0x72:  // LD (HL), D
-		mmu->write_byte(registers->hl, registers->d);
-		break;
-	case 0x73:  // LD (HL), E
-		mmu->write_byte(registers->hl, registers->e);
-		break;
-	case 0x74:  // LD (HL), H
-		mmu->write_byte(registers->hl, registers->h);
-		break;
-	case 0x75:  // LD (HL), L
-		mmu->write_byte(registers->hl, registers->l);
-		break;
-	case 0x76:  // HALT
-		if (!interrupts->is_master_enabled() && (mmu->read_byte(0xFF0F) & mmu->read_byte(0xFFFF) & 0x1F)) {
-			mmu->trigger_halt_bug = true;
-			mmu->is_halted = false;
-		}
-		else
-			mmu->is_halted = true;
-		break;
-	case 0x77:  // LD (HL), A
-		mmu->write_byte(registers->hl, registers->a);
-		break;
-	case 0x78:  // LD A, B
-		registers->a = registers->b;
-		break;
-	case 0x79:  // LD A, C
-		registers->a = registers->c;
-		break;
-	case 0x7A:  // LD A, D
-		registers->a = registers->d;
-		break;
-	case 0x7B:  // LD A, E
-		registers->a = registers->e;
-		break;
-	case 0x7C:  // LD A, H
-		registers->a = registers->h;
-		break;
-	case 0x7D:  // LD A, L
-		registers->a = registers->l;
-		break;
-	case 0x7E:  // LD A, (HL)
-		registers->a = mmu->read_byte(registers->hl);
-		break;
-	case 0x7F:  // LD A, A
-		break;
-	case 0x80:  // ADD A, B
-		add(&registers->a, registers->b);
-		break;
-	case 0x81:  // ADD A, C
-		add(&registers->a, registers->c);
-		break;
-	case 0x82:  // ADD A, D
-		add(&registers->a, registers->d);
-		break;
-	case 0x83:  // ADD A, E
-		add(&registers->a, registers->e);
-		break;
-	case 0x84:  // ADD A, H
-		add(&registers->a, registers->h);
-		break;
-	case 0x85:  // ADD A, L
-		add(&registers->a, registers->l);
-		break;
-	case 0x86:  // ADD A, (HL)
-		add(&registers->a, mmu->read_byte(registers->hl));
-		break;
-	case 0x87:  // ADD A, A
-		add(&registers->a, registers->a);
-		break;
-	case 0x88:  // ADC A, B
-		adc(registers->b);
-		break;
-	case 0x89:  // ADC A, C
-		adc(registers->c);
-		break;
-	case 0x8A:  // ADC A, D
-		adc(registers->d);
-		break;
-	case 0x8B:  // ADC A, E
-		adc(registers->e);
-		break;
-	case 0x8C:  // ADC A, H
-		adc(registers->h);
-		break;
-	case 0x8D:  // ADC A, L
-		adc(registers->l);
-		break;
-	case 0x8E:  // ADC A, (HL)
-		adc(mmu->read_byte(registers->hl));
-		break;
-	case 0x8F:  // ADC A, A
-		adc(registers->a);
-		break;
-	case 0x90:  // SUB B
-		sub(registers->b);
-		break;
-	case 0x91:  // SUB C
-		sub(registers->c);
-		break;
-	case 0x92:  // SUB D
-		sub(registers->d);
-		break;
-	case 0x93:  // SUB E
-		sub(registers->e);
-		break;
-	case 0x94:  // SUB H
-		sub(registers->h);
-		break;
-	case 0x95:  // SUB L
-		sub(registers->l);
-		break;
-	case 0x96:  // SUB (HL)
-		sub(mmu->read_byte(registers->hl));
-		break;
-	case 0x97:  // SUB A
-		sub(registers->a);
-		break;
-	case 0x98:  // SBC A, B
-		sbc(registers->b);
-		break;
-	case 0x99:  // SBC A, C
-		sbc(registers->c);
-		break;
-	case 0x9A:  // SBC A, D
-		sbc(registers->d);
-		break;
-	case 0x9B:  // SBC A, E
-		sbc(registers->e);
-		break;
-	case 0x9C:  // SBC A, H
-		sbc(registers->h);
-		break;
-	case 0x9D:  // SBC A, L
-		sbc(registers->l);
-		break;
-	case 0x9E:  // SBC A, (HL)
-		sbc(mmu->read_byte(registers->hl));
-		break;
-	case 0x9F:  // SBC A, A
-		sbc(registers->a);
-		break;
-	case 0xA0:  // AND B
-		and_(registers->b);
-		break;
-	case 0xA1:  // AND C
-		and_(registers->c);
-		break;
-	case 0xA2:  // AND D
-		and_(registers->d);
-		break;
-	case 0xA3:  // AND E
-		and_(registers->e);
-		break;
-	case 0xA4:  // AND H
-		and_(registers->h);
-		break;
-	case 0xA5:  // AND l
-		and_(registers->l);
-		break;
-	case 0xA6:  // AND (HL)
-		and_(mmu->read_byte(registers->hl));
-		break;
-	case 0xA7:  // AND A
-		and_(registers->a);
-		break;
-	case 0xA8:  // XOR B
-		xor_(registers->b);
-		break;
-	case 0xA9:  // XOR C
-		xor_(registers->c);
-		break;
-	case 0xAA:  // XOR D
-		xor_(registers->d);
-		break;
-	case 0xAB:  // XOR E
-		xor_(registers->e);
-		break;
-	case 0xAC:  // XOR H
-		xor_(registers->h);
-		break;
-	case 0xAD:  // XOR L
-		xor_(registers->l);
-		break;
-	case 0xAE:  // XOR (HL)
-		xor_(mmu->read_byte(registers->hl));
-		break;
-	case 0xAF:  // XOR A
-		xor_(registers->a);
-		break;
-	case 0xB0:  // OR B
-		or_(registers->b);
-		break;
-	case 0xB1:  // OR C
-		or_(registers->c);
-		break;
-	case 0xB2:  // OR D
-		or_(registers->d);
-		break;
-	case 0xB3:  // OR E
-		or_(registers->e);
-		break;
-	case 0xB4:  // OR H
-		or_(registers->h);
-		break;
-	case 0xB5:  // OR L
-		or_(registers->l);
-		break;
-	case 0xB6:  // OR (HL)
-		or_(mmu->read_byte(registers->hl));
-		break;
-	case 0xB7:  // OR A
-		or_(registers->a);
-		break;
-	case 0xB8:  // CP B
-		cp(registers->b);
-		break;
-	case 0xB9:  // CP C
-		cp(registers->c);
-		break;
-	case 0xBA:  // CP D
-		cp(registers->d);
-		break;
-	case 0xBB:  // CP E
-		cp(registers->e);
-		break;
-	case 0xBC:  // CP H
-		cp(registers->h);
-		break;
-	case 0xBD:  // CP L
-		cp(registers->l);
-		break;
-	case 0xBE:  // CP (HL)
-		cp(mmu->read_byte(registers->hl));
-		break;
-	case 0xBF:  // CP A
-		cp(registers->a);
-		break;
-	case 0xC0:  // RET NZ
-		ret(!registers->is_flag_set(FLAG_ZERO));
-		break;
-	case 0xC1:  // POP BC
-		registers->bc = mmu->read_short_stack(&registers->sp);
-		break;
-	case 0xC2:  // JP NZ, nn
-		jump(!registers->is_flag_set(FLAG_ZERO));
-		break;
-	case 0xC3:  // JP nn
-		registers->pc = mmu->read_short(registers->pc);
-		break;
-	case 0xC4:  // CALL NZ, nn
-		call(!registers->is_flag_set(FLAG_ZERO));
-		break;
-	case 0xC5:  // PUSH BC
-		mmu->write_short_stack(&registers->sp, registers->bc);
-		break;
-	case 0xC6:  // ADD A, n
-		add(&registers->a, mmu->read_byte(registers->pc++));
-		break;
-	case 0xC7:  // RST $00
-		mmu->write_short_stack(&registers->sp, registers->pc++);
-		registers->pc = 0x0000;
-		break;
-	case 0xC8:  // RET Z
-		ret(registers->is_flag_set(FLAG_ZERO));
-		break;
-	case 0xC9:  // RET
-		registers->pc = mmu->read_short_stack(&registers->sp);
-		break;
-	case 0xCA:  // JP Z, nn
-		jump(registers->is_flag_set(FLAG_ZERO));
-		break;
-	case 0xCB:
-		extended_execute(mmu->read_byte(registers->pc++));
-		// registers->pc++;
-		break;
-	case 0xCC:  // CALL Z, nn
-		call(registers->is_flag_set(FLAG_ZERO));
-		break;
 
-	case 0xCD:  // CALL nn
-	{
-		uint16_t operand = mmu->read_short(registers->pc);
-		registers->pc += 2;
-		mmu->write_short_stack(&registers->sp, registers->pc);
-		registers->pc = operand;
-	} break;
-	case 0xCE:  // ADC A, n
-		adc(mmu->read_byte(registers->pc++));
-		break;
-	case 0xCF:  // RST $08
-		mmu->write_short_stack(&registers->sp, registers->pc++);
-		registers->pc = 0x0008;
-		break;
-	case 0xD0:  // RET NC
-		ret(!registers->is_flag_set(FLAG_CARRY));
-		break;
-	case 0xD1:  // POP DE
-		registers->de = mmu->read_short_stack(&registers->sp);
-		break;
-	case 0xD2:  // JP NC, nn
-		jump(!registers->is_flag_set(FLAG_CARRY));
-		break;
-	case 0xD4:  // CALL NC, nn
-		call(!registers->is_flag_set(FLAG_CARRY));
-		break;
-	case 0xD5:  // PUSH DE
-		mmu->write_short_stack(&registers->sp, registers->de);
-		break;
-	case 0xD6:  // SUB n
-		sub(mmu->read_byte(registers->pc++));
-		break;
-	case 0xD7:  // RST $10
-		mmu->write_short_stack(&registers->sp, registers->pc++);
-		registers->pc = 0x0010;
-		break;
-	case 0xD8:  // RET C
-		ret(registers->is_flag_set(FLAG_CARRY));
-		break;
-	case 0xD9:  // RETI
-		interrupts->set_master_flag(true);
-		registers->pc = mmu->read_short_stack(&registers->sp);
-		break;
-	case 0xDA:  // JP C, nn
-		jump(registers->is_flag_set(FLAG_CARRY));
-		break;
-	case 0xDC:  // CALL C, nn
-		call(registers->is_flag_set(FLAG_CARRY));
-		break;
-	case 0xDE:  // SUB n
-		sbc(mmu->read_byte(registers->pc++));
-		break;
-	case 0xDF:  // RST $18
-		mmu->write_short_stack(&registers->sp, registers->pc++);
-		registers->pc = 0x0018;
-		break;
-	case 0xE0:  // LD ($FF00+n), A
-		mmu->write_byte(0xff00 + mmu->read_byte(registers->pc++), registers->a);
-		break;
-	case 0xE1:  // POP HL
-		registers->hl = mmu->read_short_stack(&registers->sp);
-		break;
-	case 0xE2:  // LD ($FF00+C), A
-		mmu->write_byte(0xff00 + registers->c, registers->a);
-		break;
-	case 0xE5:  // PUSH HL
-		mmu->write_short_stack(&registers->sp, registers->hl);
-		break;
-	case 0xE6:  // AND n
-		and_(mmu->read_byte(registers->pc++));
-		break;
-	case 0xE7:  // RST $20
-		mmu->write_short_stack(&registers->sp, registers->pc++);
-		registers->pc = 0x0020;
-		break;
-	case 0xE8:  // ADD SP, n
-		add(&registers->sp, (int8_t)mmu->read_byte(registers->pc++));
-		break;
-	case 0xE9:  // JP HL
-		registers->pc = registers->hl;
-		break;
-	case 0xEA:  // LD (nn), A
-		mmu->write_byte(mmu->read_short(registers->pc), registers->a);
-		registers->pc += 2;
-		break;
-	case 0xEE:  // XOR n
-		xor_(mmu->read_byte(registers->pc++));
-		break;
-	case 0xEF:  // RST $28
-		mmu->write_short_stack(&registers->sp, registers->pc++);
-		registers->pc = 0x0028;
-		break;
-	case 0xF0:  // LD A, ($FF00+n)
-		registers->a = mmu->read_byte(0xff00 + mmu->read_byte(registers->pc++));
-		break;
-	case 0xF1:  // POP AF
-		registers->af = mmu->read_short_stack(&registers->sp);
-		registers->f &= 0xf0;  // Reset the 4 unused bits
-		break;
-	case 0xF2:  // LD A, (C)
-		registers->a = mmu->read_byte(0xff00 + registers->c);
-		break;
-	case 0xF3:  // DI
-		interrupts->set_master_flag(false);
-		break;
-	case 0xF5:  // PUSH AF
-		mmu->write_short_stack(&registers->sp, registers->af);
-		break;
-	case 0xF6:  // OR n
-		or_(mmu->read_byte(registers->pc++));
-		break;
-	case 0xF7:  // RST $30
-		mmu->write_short_stack(&registers->sp, registers->pc++);
-		registers->pc = 0x0030;
-		break;
-	case 0xF8:  // LDHL SP, n
-		ldhl(mmu->read_byte(registers->pc++));
-		break;
-	case 0xF9:  // LD SP, HL
-		registers->sp = registers->hl;
-		break;
-	case 0xFA:  // LD A, (nn)
-		registers->a = mmu->read_byte(mmu->read_short(registers->pc));
-		registers->pc += 2;
-		break;
-	case 0xFB:  // NI
-		interrupts->set_master_flag(true);
-		break;
-	case 0xFE:  // CP n
-		cp_n(mmu->read_byte(registers->pc++));
-		break;
-	case 0xFF:  // RST $38
-		mmu->write_short_stack(&registers->sp, registers->pc++);
-		registers->pc = 0x0038;
-		break;*/
+
+	case 0x40: insts.ld_r_r(insts.REG_B, insts.REG_B); break;
+	case 0x41: insts.ld_r_r(insts.REG_B, insts.REG_C); break;
+	case 0x42: insts.ld_r_r(insts.REG_B, insts.REG_D); break;
+	case 0x43: insts.ld_r_r(insts.REG_B, insts.REG_E); break;
+	case 0x44: insts.ld_r_r(insts.REG_B, insts.REG_H); break;
+	case 0x45: insts.ld_r_r(insts.REG_B, insts.REG_L); break;
+	case 0x46: insts.ld_r_rr(insts.REG_B, HL); break;
+	case 0x47: insts.ld_r_r(insts.REG_B, insts.REG_A); break;
+	case 0x48: insts.ld_r_r(insts.REG_C, insts.REG_B); break;
+	case 0x49: insts.ld_r_r(insts.REG_C, insts.REG_C); break;
+	case 0x4A: insts.ld_r_r(insts.REG_C, insts.REG_D); break;
+	case 0x4B: insts.ld_r_r(insts.REG_C, insts.REG_E); break;
+	case 0x4C: insts.ld_r_r(insts.REG_C, insts.REG_H); break;
+	case 0x4D: insts.ld_r_r(insts.REG_C, insts.REG_L); break;
+	case 0x4E: insts.ld_r_rr(insts.REG_C, HL); break;
+	case 0x4F: insts.ld_r_r(insts.REG_C, insts.REG_A); break;
+
+
+
+	case 0x50: insts.ld_r_r(insts.REG_D, insts.REG_B); break;
+	case 0x51: insts.ld_r_r(insts.REG_D, insts.REG_C); break;
+	case 0x52: insts.ld_r_r(insts.REG_D, insts.REG_D); break;
+	case 0x53: insts.ld_r_r(insts.REG_D, insts.REG_E); break;
+	case 0x54: insts.ld_r_r(insts.REG_D, insts.REG_H); break;
+	case 0x55: insts.ld_r_r(insts.REG_D, insts.REG_L); break;
+	case 0x56: insts.ld_r_rr(insts.REG_D, HL); break;
+	case 0x57: insts.ld_r_r(insts.REG_D, insts.REG_A); break;
+	case 0x58: insts.ld_r_r(insts.REG_E, insts.REG_B); break;
+	case 0x59: insts.ld_r_r(insts.REG_E, insts.REG_C); break;
+	case 0x5A: insts.ld_r_r(insts.REG_E, insts.REG_D); break;
+	case 0x5B: insts.ld_r_r(insts.REG_E, insts.REG_E); break;
+	case 0x5C: insts.ld_r_r(insts.REG_E, insts.REG_H); break;
+	case 0x5D: insts.ld_r_r(insts.REG_E, insts.REG_L); break;
+	case 0x5E: insts.ld_r_rr(insts.REG_E, HL); break;
+	case 0x5F: insts.ld_r_r(insts.REG_E, insts.REG_A); break;
+
+
+
+	case 0x60: insts.ld_r_r(insts.REG_H, insts.REG_B); break;
+	case 0x61: insts.ld_r_r(insts.REG_H, insts.REG_C); break;
+	case 0x62: insts.ld_r_r(insts.REG_H, insts.REG_D); break;
+	case 0x63: insts.ld_r_r(insts.REG_H, insts.REG_E); break;
+	case 0x64: insts.ld_r_r(insts.REG_H, insts.REG_H); break;
+	case 0x65: insts.ld_r_r(insts.REG_H, insts.REG_L); break;
+	case 0x66: insts.ld_r_rr(insts.REG_H, HL); break;
+	case 0x67: insts.ld_r_r(insts.REG_H, insts.REG_A); break;
+	case 0x68: insts.ld_r_r(insts.REG_L, insts.REG_B); break;
+	case 0x69: insts.ld_r_r(insts.REG_L, insts.REG_C); break;
+	case 0x6A: insts.ld_r_r(insts.REG_L, insts.REG_D); break;
+	case 0x6B: insts.ld_r_r(insts.REG_L, insts.REG_E); break;
+	case 0x6C: insts.ld_r_r(insts.REG_L, insts.REG_H); break;
+	case 0x6D: insts.ld_r_r(insts.REG_L, insts.REG_L); break;
+	case 0x6E: insts.ld_r_rr(insts.REG_L, HL); break;
+	case 0x6F: insts.ld_r_r(insts.REG_L, insts.REG_A); break;
+
+
+
+	case 0x70: insts.ld_rr_r(HL, insts.REG_B); break;
+	case 0x71: insts.ld_rr_r(HL, insts.REG_C); break;
+	case 0x72: insts.ld_rr_r(HL, insts.REG_D); break;
+	case 0x73: insts.ld_rr_r(HL, insts.REG_E); break;
+	case 0x74: insts.ld_rr_r(HL, insts.REG_H); break;
+	case 0x75: insts.ld_rr_r(HL, insts.REG_L); break;
+	case 0x76: halt(); break;
+	case 0x77: insts.ld_rr_r(HL, insts.REG_A); break;
+	case 0x78: insts.ld_r_r(insts.REG_A, insts.REG_B); break;
+	case 0x79: insts.ld_r_r(insts.REG_A, insts.REG_C); break;
+	case 0x7A: insts.ld_r_r(insts.REG_A, insts.REG_D); break;
+	case 0x7B: insts.ld_r_r(insts.REG_A, insts.REG_E); break;
+	case 0x7C: insts.ld_r_r(insts.REG_A, insts.REG_H); break;
+	case 0x7D: insts.ld_r_r(insts.REG_A, insts.REG_L); break;
+	case 0x7E: insts.ld_r_rr(insts.REG_A, HL); break;
+	case 0x7F: insts.ld_r_r(insts.REG_A, insts.REG_A); break;
+
+
+
+	case 0x80: insts.add_r_r(insts.REG_A, insts.REG_B); break;
+	case 0x81: insts.add_r_r(insts.REG_A, insts.REG_C); break;
+	case 0x82: insts.add_r_r(insts.REG_A, insts.REG_D); break;
+	case 0x83: insts.add_r_r(insts.REG_A, insts.REG_E); break;
+	case 0x84: insts.add_r_r(insts.REG_A, insts.REG_H); break;
+	case 0x85: insts.add_r_r(insts.REG_A, insts.REG_L); break;
+	case 0x86: insts.add_r_rr(insts.REG_A, HL); break;
+	case 0x87: insts.add_r_r(insts.REG_A, insts.REG_A); break;
+	case 0x88: insts.adc_r_r(insts.REG_A, insts.REG_B); break;
+	case 0x89: insts.adc_r_r(insts.REG_A, insts.REG_C); break;
+	case 0x8A: insts.adc_r_r(insts.REG_A, insts.REG_D); break;
+	case 0x8B: insts.adc_r_r(insts.REG_A, insts.REG_E); break;
+	case 0x8C: insts.adc_r_r(insts.REG_A, insts.REG_H); break;
+	case 0x8D: insts.adc_r_r(insts.REG_A, insts.REG_L); break;
+	case 0x8E: insts.adc_r_rr(insts.REG_A, HL); break;
+	case 0x8F: insts.adc_r_r(insts.REG_A, insts.REG_A); break;
+
+
+
+	case 0x90: insts.sub_r(insts.REG_B); break;
+	case 0x91: insts.sub_r(insts.REG_C); break;
+	case 0x92: insts.sub_r(insts.REG_D); break;
+	case 0x93: insts.sub_r(insts.REG_E); break;
+	case 0x94: insts.sub_r(insts.REG_H); break;
+	case 0x95: insts.sub_r(insts.REG_L); break;
+	case 0x96: insts.sub_rr(HL); break;
+	case 0x97: insts.sub_r(insts.REG_A); break;
+	case 0x98: insts.sbc_r_r(insts.REG_A, insts.REG_B); break;
+	case 0x99: insts.sbc_r_r(insts.REG_A, insts.REG_C); break;
+	case 0x9A: insts.sbc_r_r(insts.REG_A, insts.REG_D); break;
+	case 0x9B: insts.sbc_r_r(insts.REG_A, insts.REG_E); break;
+	case 0x9C: insts.sbc_r_r(insts.REG_A, insts.REG_H); break;
+	case 0x9D: insts.sbc_r_r(insts.REG_A, insts.REG_L); break;
+	case 0x9E: insts.sbc_r_rr(insts.REG_A, HL); break;
+	case 0x9F: insts.sbc_r_r(insts.REG_A, insts.REG_A); break;
+
+
+
+
+		/*
+		
+		
+		case 0xA0:  // AND B
+			and_(registers->b);
+			break;
+		case 0xA1:  // AND C
+			and_(registers->c);
+			break;
+		case 0xA2:  // AND D
+			and_(registers->d);
+			break;
+		case 0xA3:  // AND E
+			and_(registers->e);
+			break;
+		case 0xA4:  // AND H
+			and_(registers->h);
+			break;
+		case 0xA5:  // AND l
+			and_(registers->l);
+			break;
+		case 0xA6:  // AND (HL)
+			and_(mmu->read_byte(registers->hl));
+			break;
+		case 0xA7:  // AND A
+			and_(registers->a);
+			break;
+		case 0xA8:  // XOR B
+			xor_(registers->b);
+			break;
+		case 0xA9:  // XOR C
+			xor_(registers->c);
+			break;
+		case 0xAA:  // XOR D
+			xor_(registers->d);
+			break;
+		case 0xAB:  // XOR E
+			xor_(registers->e);
+			break;
+		case 0xAC:  // XOR H
+			xor_(registers->h);
+			break;
+		case 0xAD:  // XOR L
+			xor_(registers->l);
+			break;
+		case 0xAE:  // XOR (HL)
+			xor_(mmu->read_byte(registers->hl));
+			break;
+		case 0xAF:  // XOR A
+			xor_(registers->a);
+			break;
+		case 0xB0:  // OR B
+			or_(registers->b);
+			break;
+		case 0xB1:  // OR C
+			or_(registers->c);
+			break;
+		case 0xB2:  // OR D
+			or_(registers->d);
+			break;
+		case 0xB3:  // OR E
+			or_(registers->e);
+			break;
+		case 0xB4:  // OR H
+			or_(registers->h);
+			break;
+		case 0xB5:  // OR L
+			or_(registers->l);
+			break;
+		case 0xB6:  // OR (HL)
+			or_(mmu->read_byte(registers->hl));
+			break;
+		case 0xB7:  // OR A
+			or_(registers->a);
+			break;
+		case 0xB8:  // CP B
+			cp(registers->b);
+			break;
+		case 0xB9:  // CP C
+			cp(registers->c);
+			break;
+		case 0xBA:  // CP D
+			cp(registers->d);
+			break;
+		case 0xBB:  // CP E
+			cp(registers->e);
+			break;
+		case 0xBC:  // CP H
+			cp(registers->h);
+			break;
+		case 0xBD:  // CP L
+			cp(registers->l);
+			break;
+		case 0xBE:  // CP (HL)
+			cp(mmu->read_byte(registers->hl));
+			break;
+		case 0xBF:  // CP A
+			cp(registers->a);
+			break;
+		case 0xC0:  // RET NZ
+			ret(!registers->is_flag_set(FLAG_ZERO));
+			break;
+		case 0xC1:  // POP BC
+			registers->bc = mmu->read_short_stack(&registers->sp);
+			break;
+		case 0xC2:  // JP NZ, nn
+			jump(!registers->is_flag_set(FLAG_ZERO));
+			break;
+		case 0xC3:  // JP nn
+			registers->pc = mmu->read_short(registers->pc);
+			break;
+		case 0xC4:  // CALL NZ, nn
+			call(!registers->is_flag_set(FLAG_ZERO));
+			break;
+		case 0xC5:  // PUSH BC
+			mmu->write_short_stack(&registers->sp, registers->bc);
+			break;
+		case 0xC6:  // ADD A, n
+			add(&registers->a, mmu->read_byte(registers->pc++));
+			break;
+		case 0xC7:  // RST $00
+			mmu->write_short_stack(&registers->sp, registers->pc++);
+			registers->pc = 0x0000;
+			break;
+		case 0xC8:  // RET Z
+			ret(registers->is_flag_set(FLAG_ZERO));
+			break;
+		case 0xC9:  // RET
+			registers->pc = mmu->read_short_stack(&registers->sp);
+			break;
+		case 0xCA:  // JP Z, nn
+			jump(registers->is_flag_set(FLAG_ZERO));
+			break;
+		case 0xCB:
+			extended_execute(mmu->read_byte(registers->pc++));
+			// registers->pc++;
+			break;
+		case 0xCC:  // CALL Z, nn
+			call(registers->is_flag_set(FLAG_ZERO));
+			break;
+
+		case 0xCD:  // CALL nn
+		{
+			uint16_t operand = mmu->read_short(registers->pc);
+			registers->pc += 2;
+			mmu->write_short_stack(&registers->sp, registers->pc);
+			registers->pc = operand;
+		} break;
+		case 0xCE:  // ADC A, n
+			adc(mmu->read_byte(registers->pc++));
+			break;
+		case 0xCF:  // RST $08
+			mmu->write_short_stack(&registers->sp, registers->pc++);
+			registers->pc = 0x0008;
+			break;
+		case 0xD0:  // RET NC
+			ret(!registers->is_flag_set(FLAG_CARRY));
+			break;
+		case 0xD1:  // POP DE
+			registers->de = mmu->read_short_stack(&registers->sp);
+			break;
+		case 0xD2:  // JP NC, nn
+			jump(!registers->is_flag_set(FLAG_CARRY));
+			break;
+		case 0xD4:  // CALL NC, nn
+			call(!registers->is_flag_set(FLAG_CARRY));
+			break;
+		case 0xD5:  // PUSH DE
+			mmu->write_short_stack(&registers->sp, registers->de);
+			break;
+		case 0xD6:  // SUB n
+			sub(mmu->read_byte(registers->pc++));
+			break;
+		case 0xD7:  // RST $10
+			mmu->write_short_stack(&registers->sp, registers->pc++);
+			registers->pc = 0x0010;
+			break;
+		case 0xD8:  // RET C
+			ret(registers->is_flag_set(FLAG_CARRY));
+			break;
+		case 0xD9:  // RETI
+			interrupts->set_master_flag(true);
+			registers->pc = mmu->read_short_stack(&registers->sp);
+			break;
+		case 0xDA:  // JP C, nn
+			jump(registers->is_flag_set(FLAG_CARRY));
+			break;
+		case 0xDC:  // CALL C, nn
+			call(registers->is_flag_set(FLAG_CARRY));
+			break;
+		case 0xDE:  // SUB n
+			sbc(mmu->read_byte(registers->pc++));
+			break;
+		case 0xDF:  // RST $18
+			mmu->write_short_stack(&registers->sp, registers->pc++);
+			registers->pc = 0x0018;
+			break;
+		case 0xE0:  // LD ($FF00+n), A
+			mmu->write_byte(0xff00 + mmu->read_byte(registers->pc++), registers->a);
+			break;
+		case 0xE1:  // POP HL
+			registers->hl = mmu->read_short_stack(&registers->sp);
+			break;
+		case 0xE2:  // LD ($FF00+C), A
+			mmu->write_byte(0xff00 + registers->c, registers->a);
+			break;
+		case 0xE5:  // PUSH HL
+			mmu->write_short_stack(&registers->sp, registers->hl);
+			break;
+		case 0xE6:  // AND n
+			and_(mmu->read_byte(registers->pc++));
+			break;
+		case 0xE7:  // RST $20
+			mmu->write_short_stack(&registers->sp, registers->pc++);
+			registers->pc = 0x0020;
+			break;
+		case 0xE8:  // ADD SP, n
+			add(&registers->sp, (int8_t)mmu->read_byte(registers->pc++));
+			break;
+		case 0xE9:  // JP HL
+			registers->pc = registers->hl;
+			break;
+		case 0xEA:  // LD (nn), A
+			mmu->write_byte(mmu->read_short(registers->pc), registers->a);
+			registers->pc += 2;
+			break;
+		case 0xEE:  // XOR n
+			xor_(mmu->read_byte(registers->pc++));
+			break;
+		case 0xEF:  // RST $28
+			mmu->write_short_stack(&registers->sp, registers->pc++);
+			registers->pc = 0x0028;
+			break;
+		case 0xF0:  // LD A, ($FF00+n)
+			registers->a = mmu->read_byte(0xff00 + mmu->read_byte(registers->pc++));
+			break;
+		case 0xF1:  // POP AF
+			registers->af = mmu->read_short_stack(&registers->sp);
+			registers->f &= 0xf0;  // Reset the 4 unused bits
+			break;
+		case 0xF2:  // LD A, (C)
+			registers->a = mmu->read_byte(0xff00 + registers->c);
+			break;
+		case 0xF3:  // DI
+			interrupts->set_master_flag(false);
+			break;
+		case 0xF5:  // PUSH AF
+			mmu->write_short_stack(&registers->sp, registers->af);
+			break;
+		case 0xF6:  // OR n
+			or_(mmu->read_byte(registers->pc++));
+			break;
+		case 0xF7:  // RST $30
+			mmu->write_short_stack(&registers->sp, registers->pc++);
+			registers->pc = 0x0030;
+			break;
+		case 0xF8:  // LDHL SP, n
+			ldhl(mmu->read_byte(registers->pc++));
+			break;
+		case 0xF9:  // LD SP, HL
+			registers->sp = registers->hl;
+			break;
+		case 0xFA:  // LD A, (nn)
+			registers->a = mmu->read_byte(mmu->read_short(registers->pc));
+			registers->pc += 2;
+			break;
+		case 0xFB:  // NI
+			interrupts->set_master_flag(true);
+			break;
+		case 0xFE:  // CP n
+			cp_n(mmu->read_byte(registers->pc++));
+			break;
+		case 0xFF:  // RST $38
+			mmu->write_short_stack(&registers->sp, registers->pc++);
+			registers->pc = 0x0038;
+			break;*/
 	default:
 
 		//printf("[ERROR] Unknown opcode: 0x%02x at 0x%04x | ", opcode, PC);
