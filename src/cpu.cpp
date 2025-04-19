@@ -81,9 +81,14 @@ void CPU::halt() {
 
 void CPU::Push16(uint16_t value) {
 	SP--;
-	bus.wram[SP] = (value >> 8) & 0xFF;
+	bus.bus_write(SP, (value >> 8) & 0xFF);
 	SP--;
-	bus.wram[SP] = value & 0xFF;
+	bus.bus_write(SP, value & 0xFF);
+}
+uint16_t CPU::Read16(uint16_t addr) {
+	uint8_t lo = bus.bus_read(addr);
+	uint8_t hi = bus.bus_read(addr + 1);
+	return lo | (hi << 8);
 }
 void CPU::HandleInterrupt() {
 	/*uint8_t triggered = IE & IF;
@@ -134,154 +139,64 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	switch (opcode) {
 	case 0x00: break; // NOP
 	case 0x01: insts.ld_rr_d16(BC); break; // LD BC, nn
-	case 0x02: insts.ld_addr_rr_a(BC, false, false); break; // LD (BC), A
+	case 0x02: insts.ld_addr_rr_a(BC, 0); break; // LD (BC), A
 	case 0x03: BC.full++; break;
 	case 0x04: insts.inc_r(insts.REG_B); break; // INC B
 	case 0x05: insts.dec_r(insts.REG_B); break;// DEC B
-	case 0x06: insts.ld_r_n(insts.REG_B, cart.rom_data[PC++]); break; // LD B, n
+	case 0x06: insts.ld_r_n(insts.REG_B, bus.bus_read(PC++)); break; // LD B, n
 	case 0x07: insts.rlc_r(insts.REG_A); break; // RLCA
 	case 0x08: insts.ld_a16_sp(); break; // LD (nn), SP
 	case 0x09: insts.add_hl_rr(BC); break; // ADD HL, BC
-	case 0x0A: insts.ld_a_addr_rr(BC); break; // LD A, (BC)
+	case 0x0A: insts.ld_a_addr_rr(BC, 0); break; // LD A, (BC)
 	case 0x0B: BC.full--; break; // DEC BC
 	case 0x0C: insts.inc_r(insts.REG_C); break; // INC C
 	case 0x0D: insts.dec_r(insts.REG_C); break; // DEC C
-	case 0x0E: insts.ld_r_n(insts.REG_C, cart.rom_data[PC++]); break; // LD C, n
+	case 0x0E: insts.ld_r_n(insts.REG_C, bus.bus_read(PC++)); break; // LD C, n
 	case 0x0F: insts.rrc(insts.REG_A); break; // RRCA
 
 
+	
+	case 0x10: break; //STOP
+	case 0x11: insts.ld_rr_d16(DE); break; // LD DE, nn
+	case 0x12: insts.ld_addr_rr_a(DE, 0); break; // LD (DE), A
+	case 0x13: DE.full++; break; // INC DE
+	case 0x14: insts.inc_r(insts.REG_D); break; // INC D
+	case 0x15: insts.dec_r(insts.REG_D); break;// DEC D
+	case 0x16: insts.ld_r_n(insts.REG_D, bus.bus_read(PC++)); break; // LD D, n
+	case 0x17: insts.rla(); break; // RLA
+	case 0x18: insts.jr_n(); break; // JR nn
+	case 0x19: insts.add_hl_rr(DE); break; // ADD HL, DE
+	case 0x1A: insts.ld_a_addr_rr(DE, 0); break; // LD A, (DE)
+	case 0x1B: DE.full--; break; // DEC DE
+	case 0x1C: insts.inc_r(insts.REG_E); break; // INC E
+	case 0x1D: insts.dec_r(insts.REG_E); break; // DEC E
+	case 0x1E: insts.ld_r_n(insts.REG_E, bus.bus_read(PC++)); break; // LD E, n
+	case 0x1F: insts.rr_r(insts.REG_A); break; // RRA
 
 
 
+	case 0x20: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, true); break; // JR NZ, *
+	case 0x21: insts.ld_rr_d16(HL); break; // LD HL, nn
+	case 0x22: insts.ld_addr_rr_a(HL, 1); break; // LD (HL+), A
+	case 0x23: HL.full++; break; // INC HL
+	case 0x24: insts.inc_r(insts.REG_H); break; // INC H
+	case 0x25: insts.dec_r(insts.REG_H); break;// DEC H
+	case 0x26: insts.ld_r_n(insts.REG_H, bus.bus_read(PC++)); break; // LD H, n
+	case 0x27: insts.daa(); break; // DAA
+	case 0x28: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; // JR Z, *
+	case 0x29: insts.add_hl_rr(HL); break; // ADD HL, HL
+	case 0x2A: insts.ld_a_addr_rr(HL, 1); break; // LD A, (HL+)
+	case 0x2B: HL.full--; break; // DEC HL
+	case 0x2C: insts.inc_r(insts.REG_L); break; // INC L
+	case 0x2D: insts.dec_r(insts.REG_L); break; // DEC L
+	case 0x2E: insts.ld_r_n(insts.REG_L, bus.bus_read(PC++)); break; // LD L, n
+	case 0x2F: insts.cpl(); break; // CPL
+
+
+
+	case 0x30: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, true); break; // JR NC, *
+	case 0x31: SP = Read16(PC + 1); PC += 3; break; // LD SP, nn
 	/*
-	case 0x10:  // STOP
-		break;
-	case 0x11:  // LD DE, nn
-		registers->de = mmu->read_short(registers->pc);
-		registers->pc += 2;
-		break;
-	case 0x12:  // LD (DE), A
-		mmu->write_byte(registers->de, registers->a);
-		break;
-	case 0x13:  // INC DE
-		registers->de++;
-		break;
-	case 0x14:  // INC D
-		inc(&registers->d);
-		break;
-	case 0x15:  // DEC D
-		dec(&registers->d);
-		break;
-	case 0x16:  // LD D, n
-		registers->d = mmu->read_byte(registers->pc++);
-		break;
-	case 0x17:  // RLA
-		rl(&registers->a);
-		registers->set_flags(FLAG_ZERO, false);
-		break;
-	case 0x18:  // JR nn
-	{
-		uint8_t operand = mmu->read_byte(registers->pc++);
-		registers->pc += (int8_t)(operand);
-	} break;
-	case 0x19:  // ADD HL, DE
-		add(&registers->hl, registers->de);
-		break;
-	case 0x1A:  // LD A, (DE)
-		registers->a = mmu->read_byte(registers->de);
-		break;
-	case 0x1B:  // DEC DE
-		registers->de--;
-		break;
-	case 0x1C:  // INC E
-		inc(&registers->e);
-		break;
-	case 0x1D:  // DEC E
-		dec(&registers->e);
-		break;
-	case 0x1E:  // LD E, n
-		registers->e = mmu->read_byte(registers->pc++);
-		break;
-	case 0x1F:  // RRA
-		rr(&registers->a);
-		registers->set_flags(FLAG_ZERO, false);
-		break;
-	case 0x20:  // JR NZ, *
-		jump_add(!registers->is_flag_set(FLAG_ZERO));
-		break;
-	case 0x21:  // LD HL, nn
-		registers->hl = mmu->read_short(registers->pc);
-		registers->pc += 2;
-		break;
-	case 0x22:  // LD (HLI), A | LD (HL+), A | LDI (HL), A
-		mmu->write_byte(registers->hl++, registers->a);
-		break;
-	case 0x23:  // INC HL
-		registers->hl++;
-		break;
-	case 0x24:  // INC H
-		inc(&registers->h);
-		break;
-	case 0x25:  // DEC H
-		dec(&registers->h);
-		break;
-	case 0x26:  // LD H, n
-		registers->h = mmu->read_byte(registers->pc++);
-		break;
-	case 0x27:  // DAA
-	{
-		uint16_t value = registers->a;
-
-		if (registers->is_flag_set(FLAG_SUBTRACT)) {
-			if (registers->is_flag_set(FLAG_CARRY)) {
-				value -= 0x60;
-			}
-
-			if (registers->is_flag_set(FLAG_HALF_CARRY)) {
-				value -= 0x6;
-			}
-		}
-		else {
-			if (registers->is_flag_set(FLAG_CARRY) || value > 0x99) {
-				value += 0x60;
-				registers->set_flags(FLAG_CARRY, true);
-			}
-
-			if (registers->is_flag_set(FLAG_HALF_CARRY) || (value & 0xF) > 0x9) {
-				value += 0x6;
-			}
-		}
-		registers->a = value;
-
-		registers->set_flags(FLAG_ZERO, !registers->a);
-		registers->set_flags(FLAG_HALF_CARRY, false);
-		break;
-	}
-	case 0x28:  // JR Z, *
-		jump_add(registers->is_flag_set(FLAG_ZERO));
-		break;
-	case 0x29:  // ADD HL, HL
-		add(&registers->hl, registers->hl);
-		break;
-	case 0x2A:  // LD A, (HL+)
-		registers->a = mmu->read_byte(registers->hl++);
-		break;
-	case 0x2B:  // DEC HL
-		registers->hl--;
-		break;
-	case 0x2C:  // INC L
-		inc(&registers->l);
-		break;
-	case 0x2D:  // DEC L
-		dec(&registers->l);
-		break;
-	case 0x2E:  // LD L, n
-		registers->l = mmu->read_byte(registers->pc++);
-		break;
-	case 0x2F:  // CPL
-		registers->a = ~registers->a;
-		registers->set_flags(FLAG_SUBTRACT | FLAG_HALF_CARRY, true);
-		break;
 	case 0x30:  // JR NC, *
 		jump_add(!registers->is_flag_set(FLAG_CARRY));
 		break;
@@ -903,9 +818,9 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 		break;*/
 	default:
 
-		printf("[ERROR] Unknown opcode: 0x%02x at 0x%04x | ", opcode, PC);
+		//printf("[ERROR] Unknown opcode: 0x%02x at 0x%04x | ", opcode, PC);
 		//printf("DIV: %d\n", mmu->timer.div);
-		printf("Cycles: %d\n", t_cycles);
+		//printf("Cycles: %d\n", t_cycles);
 		return;
 		break;
 	}
@@ -916,6 +831,7 @@ void CPU::Cycle() {
 	if (!halted) {
 
 		uint8_t opcode = bus.bus_read(PC++);
+		currOpcode = opcode;
 
 
 

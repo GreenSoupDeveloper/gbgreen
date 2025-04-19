@@ -29,6 +29,8 @@ public:
     RegisterPair AF, BC, DE, HL;
     uint16_t SP, PC;
 
+    uint8_t currOpcode = 0x00;
+
 
 
     uint64_t temp_t_cycles;
@@ -58,6 +60,7 @@ public:
 
     uint8_t ReadByte(uint16_t addr);
     void Push16(uint16_t value);
+    uint16_t Read16(uint16_t addr);
     void HandleInterrupt();
     void ExecuteInstruction(uint8_t opcode);
     

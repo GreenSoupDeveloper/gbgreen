@@ -52,12 +52,35 @@ uint8_t Bus::bus_read(uint16_t addr) {
 }
 
 
-void bus_write(uint16_t address, uint8_t value) {
-    if (address < 0x8000) {
-        //ROM Data
-        //cart_write(address, value);
-        return;
-    }
+void Bus::bus_write(uint16_t addr, uint8_t value) {
+	if (addr <= 0x7FFF) {
+		//cart.rom_data[addr]; // ROM region
+		printf("[ERROR] You can't write to ROM dude. Opcode: 0x%02X | Address: 0x%04X | Value: 0x%02X (d%d)\n", cpu.currOpcode, addr, value, value);
+	}
+	else if (addr >= 0x8000 && addr <= 0x9FFF) {
+		vram[addr - 0x8000] = value;
+	}
+	else if (addr >= 0xA000 && addr <= 0xBFFF) {
+		eram[addr - 0xA000] = value;
+	}
+	else if (addr >= 0xC000 && addr <= 0xDFFF) {
+		wram[addr - 0xC000] = value;
+	}
+	else if (addr >= 0xE000 && addr <= 0xFDFF) {
+		wram[addr - 0xE000] = value; // Echo of 0xC000–0xDDFF
+	}
+	else if (addr >= 0xFE00 && addr <= 0xFE9F) {
+		oam[addr - 0xFE00] = value;
+	}
+	else if (addr >= 0xFF00 && addr <= 0xFF7F) {
+		io[addr - 0xFF00] = value;
+	}
+	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
+		hram[addr - 0xFF80] = value;
+	}
+	else {
+		printf("[ERROR] Unknown address (Opcode: 0x%02X | Address: 0x%04X | Value: 0x%02X (d%d)).. is it you or is it me?\n", cpu.currOpcode, addr, value, value);
+	}
 
     //more to do now
 }

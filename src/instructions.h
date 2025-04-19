@@ -56,16 +56,25 @@ public:
     bool getFlag(CPU::Flag flag);
     uint8_t& getReg(Register8 reg);
 
+
+
     void ld_rr_d16(CPU::RegisterPair& reg);
-    void ld_addr_rr_a(CPU::RegisterPair& reg, bool subtract, bool add);
+    void ld_addr_rr_a(CPU::RegisterPair& reg, int ifthing);
     void inc_r(Register8 reg);
     void dec_r(Register8 reg);
     void ld_r_n(Register8 reg, uint8_t value);
     void rlc_r(Register8 reg);
     void ld_a16_sp();
     void add_hl_rr(const CPU::RegisterPair& rr);
-    void ld_a_addr_rr(const CPU::RegisterPair& reg);
-    void Instruction::rrc(Register8 reg);
+    void ld_a_addr_rr(CPU::RegisterPair& reg, int decOrInc);
+    void rrc(Register8 reg);
+    void rla();
+    void jr_n();
+    void rr_r(Register8 reg);
+    void jr_f(int8_t r8, CPU::Flag flag, bool ifNot);
+    void daa();
+    void cpl();
+
 
     ~Instruction();
 
