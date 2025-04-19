@@ -134,45 +134,26 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	switch (opcode) {
 	case 0x00: break; // NOP
 	case 0x01: insts.ld_rr_d16(BC); break; // LD BC, nn
-	case 0x02:insts.ld_addr_rr_a(BC, false, false); break; // LD (BC), A
+	case 0x02: insts.ld_addr_rr_a(BC, false, false); break; // LD (BC), A
 	case 0x03: BC.full++; break;
 	case 0x04: insts.inc_r(insts.REG_B); break; // INC B
-	/*case 0x05:  // DEC B
-		dec(&registers->b);
-		break;
-	case 0x06:  // LD B, n
-		registers->b = mmu->read_byte(registers->pc++);
-		break;
-	case 0x07:  // RLCA
-		rlc(&registers->a);
-		registers->set_flags(FLAG_ZERO, false);
-		break;
-	case 0x08:  // LD (nn), SP
-		mmu->write_short(mmu->read_short(registers->pc), registers->sp);
-		registers->pc += 2;
-		break;
-	case 0x09:  // ADD HL, BC
-		add(&registers->hl, registers->bc);
-		break;
-	case 0x0A:  // LD A, (BC)
-		registers->a = mmu->read_byte(registers->bc);
-		break;
-	case 0x0B:  // DEC BC
-		registers->bc--;
-		break;
-	case 0x0C:  // INC C
-		inc(&registers->c);
-		break;
-	case 0x0D:  // DEC C
-		dec(&registers->c);
-		break;
-	case 0x0E:  // LD C, n
-		registers->c = mmu->read_byte(registers->pc++);
-		break;
-	case 0x0F:  // RRCA
-		rrc(&registers->a);
-		registers->set_flags(FLAG_ZERO, false);
-		break;
+	case 0x05: insts.dec_r(insts.REG_B); break;// DEC B
+	case 0x06: insts.ld_r_n(insts.REG_B, cart.rom_data[PC++]); break; // LD B, n
+	case 0x07: insts.rlc_r(insts.REG_A); break; // RLCA
+	case 0x08: insts.ld_a16_sp(); break; // LD (nn), SP
+	case 0x09: insts.add_hl_rr(BC); break; // ADD HL, BC
+	case 0x0A: insts.ld_a_addr_rr(BC); break; // LD A, (BC)
+	case 0x0B: BC.full--; break; // DEC BC
+	case 0x0C: insts.inc_r(insts.REG_C); break; // INC C
+	case 0x0D: insts.dec_r(insts.REG_C); break; // DEC C
+	case 0x0E: insts.ld_r_n(insts.REG_C, cart.rom_data[PC++]); break; // LD C, n
+	case 0x0F: insts.rrc(insts.REG_A); break; // RRCA
+
+
+
+
+
+	/*
 	case 0x10:  // STOP
 		break;
 	case 0x11:  // LD DE, nn
