@@ -126,6 +126,7 @@ void CPU::HandleInterrupt() {
 }
 
 int tempDisableIME = 0;
+uint16_t tempPC = 0x100;
 void CPU::ExecuteInstruction(uint8_t opcode) {
 	uint8_t value, result, offset;
 	uint16_t addr;
@@ -211,7 +212,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 
 	case 0x30: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, true); break; // JR NC, *
-	case 0x31: SP = Read16(PC + 1); PC += 3; break; // LD SP, nn
+	case 0x31: SP = Read16(PC + 1); PC += 2; break; // LD SP, nn
 	case 0x32: insts.ld_addr_rr_a(HL, -1); break; // LD (HL-), A
 	case 0x33: SP++; break; // INC SP
 	case 0x34: value = bus.bus_read(HL.full); result = value + 1; insts.setFlag(cpu.FLAG_Z, result == 0); insts.setFlag(cpu.FLAG_N, false); insts.setFlag(cpu.FLAG_H, (value & 0x0F) + 1 > 0x0F); bus.bus_write(HL.full, result); break; // INC (HL)
@@ -458,13 +459,13 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	
 	default:
 
-		printf("[ERROR] Unknown opcode: 0x%02x at 0x%04x | ", opcode, PC);
+		printf("[ERROR] Unknown opcode: 0x%02x at 0x%04x | ", opcode, tempPC);
 		//printf("DIV: %d\n", mmu->timer.div);
 		printf("Cycles: %d\n", t_cycles);
 		return;
 		break;
 	}
-	printf("[INFO] Opcode 0x%02x at 0x%04x executed\n", opcode, PC);
+	printf("[INFO] Opcode 0x%02x at 0x%04x executed (%02X %02X %02X) | A: %02X B: %02X C: %02X\n", opcode, tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), AF.hi, BC.hi, BC.lo);
 
 }
 void CPU::Cycle() {
@@ -472,7 +473,9 @@ void CPU::Cycle() {
 
 		uint8_t opcode = bus.bus_read(PC);
 		currOpcode = opcode;
+		tempPC = PC;
 		PC++;
+		
 
 
 
@@ -483,7 +486,9 @@ void CPU::Cycle() {
 
 
 		temp_t_cycles = 0; // Reset before instruction
+	
 		ExecuteInstruction(opcode);
+		
 		t_cycles += temp_t_cycles;
 		m_cycles += temp_t_cycles / 4;
 	}
