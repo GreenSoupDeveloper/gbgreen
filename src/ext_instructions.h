@@ -53,6 +53,12 @@ public:
 	void swap_rr(CPU::RegisterPair pair);
 	void srl_r(Instruction::Register8 reg);
 	void srl_rr(CPU::RegisterPair pair);
+	void bit_n_r(uint8_t bit, Instruction::Register8 reg);
+	void bit_n_rr(uint8_t bit, CPU::RegisterPair reg);
+	void res_n_r(uint8_t bit, Instruction::Register8 reg);
+	void res_n_rr(uint8_t bit, CPU::RegisterPair reg);
+	void set_n_r(uint8_t bit, Instruction::Register8 reg);
+	void set_n_rr(uint8_t bit, CPU::RegisterPair reg);
 
 
 	~ExtInstruction();

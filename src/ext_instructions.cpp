@@ -92,6 +92,234 @@ void ExtInstruction::ExecuteExtInstruction(uint8_t opcode) {
 
 
 
+	case 0x40: bit_n_r(0, insts.REG_B); break; // BIT 0, B
+	case 0x41: bit_n_r(0, insts.REG_C); break; // BIT 0, C
+	case 0x42: bit_n_r(0, insts.REG_D); break; // BIT 0, D
+	case 0x43: bit_n_r(0, insts.REG_E); break; // BIT 0, E
+	case 0x44: bit_n_r(0, insts.REG_H); break; // BIT 0, H
+	case 0x45: bit_n_r(0, insts.REG_L); break; // BIT 0, L
+	case 0x46: bit_n_rr(0, cpu.HL); break; // BIT 0, (HL)
+	case 0x47: bit_n_r(0, insts.REG_B); break; // BIT 0, A
+	case 0x48: bit_n_r(1, insts.REG_B); break; // BIT 1, B
+	case 0x49: bit_n_r(1, insts.REG_C); break; // BIT 1, C
+	case 0x4A: bit_n_r(1, insts.REG_D); break; // BIT 1, D
+	case 0x4B: bit_n_r(1, insts.REG_E); break; // BIT 1, E
+	case 0x4C: bit_n_r(1, insts.REG_H); break; // BIT 1, H
+	case 0x4D: bit_n_r(1, insts.REG_L); break; // BIT 1, L
+	case 0x4E: bit_n_rr(1, cpu.HL); break; // BIT 1, (HL)
+	case 0x4F: bit_n_r(1, insts.REG_B); break; // BIT 1, A
+
+
+
+	case 0x50: bit_n_r(2, insts.REG_B); break; // BIT 2, B
+	case 0x51: bit_n_r(2, insts.REG_C); break; // BIT 2, C
+	case 0x52: bit_n_r(2, insts.REG_D); break; // BIT 2, D
+	case 0x53: bit_n_r(2, insts.REG_E); break; // BIT 2, E
+	case 0x54: bit_n_r(2, insts.REG_H); break; // BIT 2, H
+	case 0x55: bit_n_r(2, insts.REG_L); break; // BIT 2, L
+	case 0x56: bit_n_rr(2, cpu.HL); break; // BIT 2, (HL)
+	case 0x57: bit_n_r(2, insts.REG_B); break; // BIT 2, A
+	case 0x58: bit_n_r(3, insts.REG_B); break; // BIT 3, B
+	case 0x59: bit_n_r(3, insts.REG_C); break; // BIT 3, C
+	case 0x5A: bit_n_r(3, insts.REG_D); break; // BIT 3, D
+	case 0x5B: bit_n_r(3, insts.REG_E); break; // BIT 3, E
+	case 0x5C: bit_n_r(3, insts.REG_H); break; // BIT 3, H
+	case 0x5D: bit_n_r(3, insts.REG_L); break; // BIT 3, L
+	case 0x5E: bit_n_rr(3, cpu.HL); break; // BIT 3, (HL)
+	case 0x5F: bit_n_r(3, insts.REG_B); break; // BIT 3, A
+
+
+
+	case 0x60: bit_n_r(4, insts.REG_B); break; // BIT 4, B
+	case 0x61: bit_n_r(4, insts.REG_C); break; // BIT 4, C
+	case 0x62: bit_n_r(4, insts.REG_D); break; // BIT 4, D
+	case 0x63: bit_n_r(4, insts.REG_E); break; // BIT 4, E
+	case 0x64: bit_n_r(4, insts.REG_H); break; // BIT 4, H
+	case 0x65: bit_n_r(4, insts.REG_L); break; // BIT 4, L
+	case 0x66: bit_n_rr(4, cpu.HL); break; // BIT 4, (HL)
+	case 0x67: bit_n_r(4, insts.REG_B); break; // BIT 4, A
+	case 0x68: bit_n_r(5, insts.REG_B); break; // BIT 5, B
+	case 0x69: bit_n_r(5, insts.REG_C); break; // BIT 5, C
+	case 0x6A: bit_n_r(5, insts.REG_D); break; // BIT 5, D
+	case 0x6B: bit_n_r(5, insts.REG_E); break; // BIT 5, E
+	case 0x6C: bit_n_r(5, insts.REG_H); break; // BIT 5, H
+	case 0x6D: bit_n_r(5, insts.REG_L); break; // BIT 5, L
+	case 0x6E: bit_n_rr(5, cpu.HL); break; // BIT 5, (HL)
+	case 0x6F: bit_n_r(5, insts.REG_B); break; // BIT 5, A
+
+
+
+	case 0x70: bit_n_r(6, insts.REG_B); break; // BIT 6, B
+	case 0x71: bit_n_r(6, insts.REG_C); break; // BIT 6, C
+	case 0x72: bit_n_r(6, insts.REG_D); break; // BIT 6, D
+	case 0x73: bit_n_r(6, insts.REG_E); break; // BIT 6, E
+	case 0x74: bit_n_r(6, insts.REG_H); break; // BIT 6, H
+	case 0x75: bit_n_r(6, insts.REG_L); break; // BIT 6, L
+	case 0x76: bit_n_rr(6, cpu.HL); break; // BIT 6, (HL)
+	case 0x77: bit_n_r(6, insts.REG_B); break; // BIT 6, A
+	case 0x78: bit_n_r(7, insts.REG_B); break; // BIT 7, B
+	case 0x79: bit_n_r(7, insts.REG_C); break; // BIT 7, C
+	case 0x7A: bit_n_r(7, insts.REG_D); break; // BIT 7, D
+	case 0x7B: bit_n_r(7, insts.REG_E); break; // BIT 7, E
+	case 0x7C: bit_n_r(7, insts.REG_H); break; // BIT 7, H
+	case 0x7D: bit_n_r(7, insts.REG_L); break; // BIT 7, L
+	case 0x7E: bit_n_rr(7, cpu.HL); break; // BIT 7, (HL)
+	case 0x7F: bit_n_r(7, insts.REG_B); break; // BIT 7, A
+
+
+
+	case 0x80: res_n_r(0, insts.REG_B); break; // RES 0, B
+	case 0x81: res_n_r(0, insts.REG_C); break; // RES 0, C
+	case 0x82: res_n_r(0, insts.REG_D); break; // RES 0, D
+	case 0x83: res_n_r(0, insts.REG_E); break; // RES 0, E
+	case 0x84: res_n_r(0, insts.REG_H); break; // RES 0, H
+	case 0x85: res_n_r(0, insts.REG_L); break; // RES 0, L
+	case 0x86: res_n_rr(0, cpu.HL); break; // RES 0, (HL)
+	case 0x87: res_n_r(0, insts.REG_B); break; // RES 0, A
+	case 0x88: res_n_r(1, insts.REG_B); break; // RES 1, B
+	case 0x89: res_n_r(1, insts.REG_C); break; // RES 1, C
+	case 0x8A: res_n_r(1, insts.REG_D); break; // RES 1, D
+	case 0x8B: res_n_r(1, insts.REG_E); break; // RES 1, E
+	case 0x8C: res_n_r(1, insts.REG_H); break; // RES 1, H
+	case 0x8D: res_n_r(1, insts.REG_L); break; // RES 1, L
+	case 0x8E: res_n_rr(1, cpu.HL); break; // RES 1, (HL)
+	case 0x8F: res_n_r(1, insts.REG_B); break; // RES 1, A
+
+
+
+	case 0x90: res_n_r(2, insts.REG_B); break; // RES 2, B
+	case 0x91: res_n_r(2, insts.REG_C); break; // RES 2, C
+	case 0x92: res_n_r(2, insts.REG_D); break; // RES 2, D
+	case 0x93: res_n_r(2, insts.REG_E); break; // RES 2, E
+	case 0x94: res_n_r(2, insts.REG_H); break; // RES 2, H
+	case 0x95: res_n_r(2, insts.REG_L); break; // RES 2, L
+	case 0x96: res_n_rr(2, cpu.HL); break; // RES 2, (HL)
+	case 0x97: res_n_r(2, insts.REG_B); break; // RES 2, A
+	case 0x98: res_n_r(3, insts.REG_B); break; // RES 3, B
+	case 0x99: res_n_r(3, insts.REG_C); break; // RES 3, C
+	case 0x9A: res_n_r(3, insts.REG_D); break; // RES 3, D
+	case 0x9B: res_n_r(3, insts.REG_E); break; // RES 3, E
+	case 0x9C: res_n_r(3, insts.REG_H); break; // RES 3, H
+	case 0x9D: res_n_r(3, insts.REG_L); break; // RES 3, L
+	case 0x9E: res_n_rr(3, cpu.HL); break; // RES 3, (HL)
+	case 0x9F: res_n_r(3, insts.REG_B); break; // RES 3, A
+
+
+
+	case 0xA0: res_n_r(4, insts.REG_B); break; // RES 4, B
+	case 0xA1: res_n_r(4, insts.REG_C); break; // RES 4, C
+	case 0xA2: res_n_r(4, insts.REG_D); break; // RES 4, D
+	case 0xA3: res_n_r(4, insts.REG_E); break; // RES 4, E
+	case 0xA4: res_n_r(4, insts.REG_H); break; // RES 4, H
+	case 0xA5: res_n_r(4, insts.REG_L); break; // RES 4, L
+	case 0xA6: res_n_rr(4, cpu.HL); break; // RES 4, (HL)
+	case 0xA7: res_n_r(4, insts.REG_B); break; // RES 4, A
+	case 0xA8: res_n_r(5, insts.REG_B); break; // RES 5, B
+	case 0xA9: res_n_r(5, insts.REG_C); break; // RES 5, C
+	case 0xAA: res_n_r(5, insts.REG_D); break; // RES 5, D
+	case 0xAB: res_n_r(5, insts.REG_E); break; // RES 5, E
+	case 0xAC: res_n_r(5, insts.REG_H); break; // RES 5, H
+	case 0xAD: res_n_r(5, insts.REG_L); break; // RES 5, L
+	case 0xAE: res_n_rr(5, cpu.HL); break; // RES 5, (HL)
+	case 0xAF: res_n_r(5, insts.REG_B); break; // RES 5, A
+
+
+
+	case 0xB0: res_n_r(6, insts.REG_B); break; // RES 6, B
+	case 0xB1: res_n_r(6, insts.REG_C); break; // RES 6, C
+	case 0xB2: res_n_r(6, insts.REG_D); break; // RES 6, D
+	case 0xB3: res_n_r(6, insts.REG_E); break; // RES 6, E
+	case 0xB4: res_n_r(6, insts.REG_H); break; // RES 6, H
+	case 0xB5: res_n_r(6, insts.REG_L); break; // RES 6, L
+	case 0xB6: res_n_rr(6, cpu.HL); break; // RES 6, (HL)
+	case 0xB7: res_n_r(6, insts.REG_B); break; // RES 6, A
+	case 0xB8: res_n_r(7, insts.REG_B); break; // RES 7, B
+	case 0xB9: res_n_r(7, insts.REG_C); break; // RES 7, C
+	case 0xBA: res_n_r(7, insts.REG_D); break; // RES 7, D
+	case 0xBB: res_n_r(7, insts.REG_E); break; // RES 7, E
+	case 0xBC: res_n_r(7, insts.REG_H); break; // RES 7, H
+	case 0xBD: res_n_r(7, insts.REG_L); break; // RES 7, L
+	case 0xBE: res_n_rr(7, cpu.HL); break; // RES 7, (HL)
+	case 0xBF: res_n_r(7, insts.REG_B); break; // RES 7, A
+
+
+
+	case 0xC0: set_n_r(0, insts.REG_B); break; // SET 0, B
+	case 0xC1: set_n_r(0, insts.REG_C); break; // SET 0, C
+	case 0xC2: set_n_r(0, insts.REG_D); break; // SET 0, D
+	case 0xC3: set_n_r(0, insts.REG_E); break; // SET 0, E
+	case 0xC4: set_n_r(0, insts.REG_H); break; // SET 0, H
+	case 0xC5: set_n_r(0, insts.REG_L); break; // SET 0, L
+	case 0xC6: set_n_rr(0, cpu.HL); break; // SET 0, (HL)
+	case 0xC7: set_n_r(0, insts.REG_B); break; // SET 0, A
+	case 0xC8: set_n_r(1, insts.REG_B); break; // SET 1, B
+	case 0xC9: set_n_r(1, insts.REG_C); break; // SET 1, C
+	case 0xCA: set_n_r(1, insts.REG_D); break; // SET 1, D
+	case 0xCB: set_n_r(1, insts.REG_E); break; // SET 1, E
+	case 0xCC: set_n_r(1, insts.REG_H); break; // SET 1, H
+	case 0xCD: set_n_r(1, insts.REG_L); break; // SET 1, L
+	case 0xCE: set_n_rr(1, cpu.HL); break; // SET 1, (HL)
+	case 0xCF: set_n_r(1, insts.REG_B); break; // SET 1, A
+
+
+
+	case 0xD0: set_n_r(2, insts.REG_B); break; // SET 2, B
+	case 0xD1: set_n_r(2, insts.REG_C); break; // SET 2, C
+	case 0xD2: set_n_r(2, insts.REG_D); break; // SET 2, D
+	case 0xD3: set_n_r(2, insts.REG_E); break; // SET 2, E
+	case 0xD4: set_n_r(2, insts.REG_H); break; // SET 2, H
+	case 0xD5: set_n_r(2, insts.REG_L); break; // SET 2, L
+	case 0xD6: set_n_rr(2, cpu.HL); break; // SET 2, (HL)
+	case 0xD7: set_n_r(2, insts.REG_B); break; // SET 2, A
+	case 0xD8: set_n_r(3, insts.REG_B); break; // SET 3, B
+	case 0xD9: set_n_r(3, insts.REG_C); break; // SET 3, C
+	case 0xDA: set_n_r(3, insts.REG_D); break; // SET 3, D
+	case 0xDB: set_n_r(3, insts.REG_E); break; // SET 3, E
+	case 0xDC: set_n_r(3, insts.REG_H); break; // SET 3, H
+	case 0xDD: set_n_r(3, insts.REG_L); break; // SET 3, L
+	case 0xDE: set_n_rr(3, cpu.HL); break; // SET 3, (HL)
+	case 0xDF: set_n_r(3, insts.REG_B); break; // SET 3, A
+
+
+
+	case 0xE0: set_n_r(4, insts.REG_B); break; // SET 4, B
+	case 0xE1: set_n_r(4, insts.REG_C); break; // SET 4, C
+	case 0xE2: set_n_r(4, insts.REG_D); break; // SET 4, D
+	case 0xE3: set_n_r(4, insts.REG_E); break; // SET 4, E
+	case 0xE4: set_n_r(4, insts.REG_H); break; // SET 4, H
+	case 0xE5: set_n_r(4, insts.REG_L); break; // SET 4, L
+	case 0xE6: set_n_rr(4, cpu.HL); break; // SET 4, (HL)
+	case 0xE7: set_n_r(4, insts.REG_B); break; // SET 4, A
+	case 0xE8: set_n_r(5, insts.REG_B); break; // SET 5, B
+	case 0xE9: set_n_r(5, insts.REG_C); break; // SET 5, C
+	case 0xEA: set_n_r(5, insts.REG_D); break; // SET 5, D
+	case 0xEB: set_n_r(5, insts.REG_E); break; // SET 5, E
+	case 0xEC: set_n_r(5, insts.REG_H); break; // SET 5, H
+	case 0xED: set_n_r(5, insts.REG_L); break; // SET 5, L
+	case 0xEE: set_n_rr(5, cpu.HL); break; // SET 5, (HL)
+	case 0xEF: set_n_r(5, insts.REG_B); break; // SET 5, A
+
+
+
+	case 0xF0: set_n_r(6, insts.REG_B); break; // SET 6, B
+	case 0xF1: set_n_r(6, insts.REG_C); break; // SET 6, C
+	case 0xF2: set_n_r(6, insts.REG_D); break; // SET 6, D
+	case 0xF3: set_n_r(6, insts.REG_E); break; // SET 6, E
+	case 0xF4: set_n_r(6, insts.REG_H); break; // SET 6, H
+	case 0xF5: set_n_r(6, insts.REG_L); break; // SET 6, L
+	case 0xF6: set_n_rr(6, cpu.HL); break; // SET 6, (HL)
+	case 0xF7: set_n_r(6, insts.REG_B); break; // SET 6, A
+	case 0xF8: set_n_r(7, insts.REG_B); break; // SET 7, B
+	case 0xF9: set_n_r(7, insts.REG_C); break; // SET 7, C
+	case 0xFA: set_n_r(7, insts.REG_D); break; // SET 7, D
+	case 0xFB: set_n_r(7, insts.REG_E); break; // SET 7, E
+	case 0xFC: set_n_r(7, insts.REG_H); break; // SET 7, H
+	case 0xFD: set_n_r(7, insts.REG_L); break; // SET 7, L
+	case 0xFE: set_n_rr(7, cpu.HL); break; // SET 7, (HL)
+	case 0xFF: set_n_r(7, insts.REG_B); break; // SET 7, A
+
+
+
 	default:
 
 		printf("[ERROR] Unknown EXTENDED opcode: 0x%02x at 0x%04x | ", opcode, cpu.PC);
@@ -361,4 +589,49 @@ void ExtInstruction::srl_rr(CPU::RegisterPair pair) {
 	insts.setFlag(cpu.FLAG_N, false);        // N always 0
 	insts.setFlag(cpu.FLAG_H, false);        // H always 0
 	insts.setFlag(cpu.FLAG_C, carry_out);    // C = original bit0
+}
+void ExtInstruction::bit_n_r(uint8_t bit, Instruction::Register8 reg) {
+	uint8_t val = insts.getReg(reg);
+	bool bitIsZero = (val & (1 << bit)) == 0;
+
+	insts.setFlag(cpu.FLAG_Z, bitIsZero);
+	insts.setFlag(cpu.FLAG_N, false);
+	insts.setFlag(cpu.FLAG_H, true);
+	insts.setFlag(cpu.FLAG_C, insts.getFlag(cpu.FLAG_C));
+}
+void ExtInstruction::bit_n_rr(uint8_t bit, CPU::RegisterPair reg) {
+	// Read the byte at [HL]
+	uint16_t addr = reg.full;
+	uint8_t value = bus.bus_read(addr);
+
+	// Test bit 0 (LSB)
+	bool bit0 = (value & (1 << 0)) == 0;
+
+	// Flags: Z=1 if bit0 is 0, N=0, H=1, C unchanged
+	insts.setFlag(cpu.FLAG_Z, bit0);            // Z=1 if bit 0 is 0
+	insts.setFlag(cpu.FLAG_N, false);          // N always 0
+	insts.setFlag(cpu.FLAG_H, true);           // H always 1
+	insts.setFlag(cpu.FLAG_C, insts.getFlag(cpu.FLAG_C)); // C unchanged
+}
+void ExtInstruction::res_n_r(uint8_t bit, Instruction::Register8 reg) {
+	uint8_t val = insts.getReg(reg);
+	val &= ~(1 << bit);  // Clear the specified bit
+	insts.getReg(reg) = val;
+}
+void ExtInstruction::res_n_rr(uint8_t bit, CPU::RegisterPair reg) {
+	uint16_t addr = reg.full;
+	uint8_t value = bus.bus_read(addr);
+	value &= ~(1 << bit);  // Clear the specified bit
+	bus.bus_write(addr, value);
+}
+void ExtInstruction::set_n_r(uint8_t bit, Instruction::Register8 reg) {
+	uint8_t val = insts.getReg(reg);
+	val |= (1 << bit);  // Set the specified bit
+	insts.getReg(reg) = val;
+}
+void ExtInstruction::set_n_rr(uint8_t bit, CPU::RegisterPair reg) {
+	uint16_t address = reg.full;
+	uint8_t value = bus.bus_read(address);
+	value |= (1 << bit);  // Set specified bit
+	bus.bus_write(address, value);
 }
