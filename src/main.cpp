@@ -148,7 +148,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 	//cpu.d_PrintState();
 
 	UpdatePixels();
-	SDL_Delay(1);
+	SDL_Delay(100);
 	emu.ticks++;
 
 	return SDL_APP_CONTINUE;

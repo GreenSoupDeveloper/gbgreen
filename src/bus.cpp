@@ -45,9 +45,15 @@ uint8_t Bus::bus_read(uint16_t addr) {
 	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
 		return hram[addr - 0xFF80];
 	}
-	/*else if (addr == 0xFFFF) {
-		return interrupt_enable;
-	}*/
+	else if (addr == 0xFFFF) {
+		return IE;
+	}
+	else if (addr == 0xFF0F) {
+		return IF;
+	}
+	else {
+		printf("[ERROR] Unknown reading address (Opcode: 0x%02X | Address: 0x%04X).. is it you or is it me?\n", cpu.currOpcode, addr);
+	}
 	return 0xFF; // Unusable or unimplemented area
 }
 
@@ -78,9 +84,15 @@ void Bus::bus_write(uint16_t addr, uint8_t value) {
 	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
 		hram[addr - 0xFF80] = value;
 	}
+	else if (addr == 0xFFFF) {
+		IE = value;
+	}
+	else if (addr == 0xFF0F) {
+		IF = value;
+	}
 	else {
-		printf("[ERROR] Unknown address (Opcode: 0x%02X | Address: 0x%04X | Value: 0x%02X (d%d)).. is it you or is it me?\n", cpu.currOpcode, addr, value, value);
+		printf("[ERROR] Unknown writing address (Opcode: 0x%02X | Address: 0x%04X | Value: 0x%02X (d%d)).. is it you or is it me?\n", cpu.currOpcode, addr, value, value);
 	}
 
-    //more to do now
+    // hi
 }

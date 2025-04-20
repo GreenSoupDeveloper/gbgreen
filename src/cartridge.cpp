@@ -113,8 +113,8 @@ bool Cartridge::LoadROM(std::string filename) {
 
 
 			}
-			else
-				rom_data[i] = buffer[i];
+			
+			rom_data[i] = buffer[i];
 		}
 		uint16_t x = 0;
 		for (uint16_t i = 0x0134; i <= 0x014C; i++) {

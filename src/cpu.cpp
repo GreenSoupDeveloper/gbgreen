@@ -90,7 +90,9 @@ uint16_t CPU::Read16(uint16_t addr) {
 	uint8_t hi = bus.bus_read(addr + 1);
 	return lo | (hi << 8);
 }
+
 void CPU::HandleInterrupt() {
+	
 	/*uint8_t triggered = IE & IF;
 	if (triggered == 0)
 		return;
@@ -123,9 +125,23 @@ void CPU::HandleInterrupt() {
 	} coming soon*/
 }
 
-
+int tempDisableIME = 0;
 void CPU::ExecuteInstruction(uint8_t opcode) {
-	uint8_t value, result;
+	uint8_t value, result, offset;
+	uint16_t addr;
+	if (tempDisableIME == 1) {
+		tempDisableIME++;
+	}else if (tempDisableIME == 2) {
+		IME = false;
+		tempDisableIME = 0;
+	}
+	if (tempDisableIME == 4) {
+		tempDisableIME++;
+	}
+	else if (tempDisableIME == 5) {
+		IME = true;
+		tempDisableIME = 0;
+	}
 	size_t size = sizeof(cart.rom_data);
 	//std::cout << "wram Used: " << size << "\n";
 	if (size > 0x10000) {
@@ -289,278 +305,159 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 
 
-	case 0x80: insts.add_r_r(insts.REG_A, insts.REG_B); break;
-	case 0x81: insts.add_r_r(insts.REG_A, insts.REG_C); break;
-	case 0x82: insts.add_r_r(insts.REG_A, insts.REG_D); break;
-	case 0x83: insts.add_r_r(insts.REG_A, insts.REG_E); break;
-	case 0x84: insts.add_r_r(insts.REG_A, insts.REG_H); break;
-	case 0x85: insts.add_r_r(insts.REG_A, insts.REG_L); break;
+	case 0x80: insts.add_r_r(insts.REG_A, insts.getReg(insts.REG_B)); break;
+	case 0x81: insts.add_r_r(insts.REG_A, insts.getReg(insts.REG_C)); break;
+	case 0x82: insts.add_r_r(insts.REG_A, insts.getReg(insts.REG_D)); break;
+	case 0x83: insts.add_r_r(insts.REG_A, insts.getReg(insts.REG_E)); break;
+	case 0x84: insts.add_r_r(insts.REG_A, insts.getReg(insts.REG_H)); break;
+	case 0x85: insts.add_r_r(insts.REG_A, insts.getReg(insts.REG_L)); break;
 	case 0x86: insts.add_r_rr(insts.REG_A, HL); break;
-	case 0x87: insts.add_r_r(insts.REG_A, insts.REG_A); break;
-	case 0x88: insts.adc_r_r(insts.REG_A, insts.REG_B); break;
-	case 0x89: insts.adc_r_r(insts.REG_A, insts.REG_C); break;
-	case 0x8A: insts.adc_r_r(insts.REG_A, insts.REG_D); break;
-	case 0x8B: insts.adc_r_r(insts.REG_A, insts.REG_E); break;
-	case 0x8C: insts.adc_r_r(insts.REG_A, insts.REG_H); break;
-	case 0x8D: insts.adc_r_r(insts.REG_A, insts.REG_L); break;
+	case 0x87: insts.add_r_r(insts.REG_A, insts.getReg(insts.REG_A)); break;
+	case 0x88: insts.adc_r_r(insts.REG_A, insts.getReg(insts.REG_B)); break;
+	case 0x89: insts.adc_r_r(insts.REG_A, insts.getReg(insts.REG_C)); break;
+	case 0x8A: insts.adc_r_r(insts.REG_A, insts.getReg(insts.REG_D)); break;
+	case 0x8B: insts.adc_r_r(insts.REG_A, insts.getReg(insts.REG_E)); break;
+	case 0x8C: insts.adc_r_r(insts.REG_A, insts.getReg(insts.REG_H)); break;
+	case 0x8D: insts.adc_r_r(insts.REG_A, insts.getReg(insts.REG_L)); break;
 	case 0x8E: insts.adc_r_rr(insts.REG_A, HL); break;
-	case 0x8F: insts.adc_r_r(insts.REG_A, insts.REG_A); break;
+	case 0x8F: insts.adc_r_r(insts.REG_A, insts.getReg(insts.REG_A)); break;
 
 
 
-	case 0x90: insts.sub_r(insts.REG_B); break;
-	case 0x91: insts.sub_r(insts.REG_C); break;
-	case 0x92: insts.sub_r(insts.REG_D); break;
-	case 0x93: insts.sub_r(insts.REG_E); break;
-	case 0x94: insts.sub_r(insts.REG_H); break;
-	case 0x95: insts.sub_r(insts.REG_L); break;
+	case 0x90: insts.sub_r_r(insts.REG_A, insts.getReg(insts.REG_B)); break;
+	case 0x91: insts.sub_r_r(insts.REG_A, insts.getReg(insts.REG_C)); break;
+	case 0x92: insts.sub_r_r(insts.REG_A, insts.getReg(insts.REG_D)); break;
+	case 0x93: insts.sub_r_r(insts.REG_A, insts.getReg(insts.REG_E)); break;
+	case 0x94: insts.sub_r_r(insts.REG_A, insts.getReg(insts.REG_H)); break;
+	case 0x95: insts.sub_r_r(insts.REG_A, insts.getReg(insts.REG_L)); break;
 	case 0x96: insts.sub_rr(HL); break;
-	case 0x97: insts.sub_r(insts.REG_A); break;
-	case 0x98: insts.sbc_r_r(insts.REG_A, insts.REG_B); break;
-	case 0x99: insts.sbc_r_r(insts.REG_A, insts.REG_C); break;
-	case 0x9A: insts.sbc_r_r(insts.REG_A, insts.REG_D); break;
-	case 0x9B: insts.sbc_r_r(insts.REG_A, insts.REG_E); break;
-	case 0x9C: insts.sbc_r_r(insts.REG_A, insts.REG_H); break;
-	case 0x9D: insts.sbc_r_r(insts.REG_A, insts.REG_L); break;
+	case 0x97: insts.sub_r_r(insts.REG_A, insts.getReg(insts.REG_A)); break;
+	case 0x98: insts.sbc_r_r(insts.REG_A, insts.getReg(insts.REG_B)); break;
+	case 0x99: insts.sbc_r_r(insts.REG_A, insts.getReg(insts.REG_C)); break;
+	case 0x9A: insts.sbc_r_r(insts.REG_A, insts.getReg(insts.REG_D)); break;
+	case 0x9B: insts.sbc_r_r(insts.REG_A, insts.getReg(insts.REG_E)); break;
+	case 0x9C: insts.sbc_r_r(insts.REG_A, insts.getReg(insts.REG_H)); break;
+	case 0x9D: insts.sbc_r_r(insts.REG_A, insts.getReg(insts.REG_L)); break;
 	case 0x9E: insts.sbc_r_rr(insts.REG_A, HL); break;
-	case 0x9F: insts.sbc_r_r(insts.REG_A, insts.REG_A); break;
+	case 0x9F: insts.sbc_r_r(insts.REG_A, insts.getReg(insts.REG_A)); break;
 
 
 
+	case 0xA0: insts.and_r_r(insts.REG_A, insts.getReg(insts.REG_B)); break;
+	case 0xA1: insts.and_r_r(insts.REG_A, insts.getReg(insts.REG_C)); break;
+	case 0xA2: insts.and_r_r(insts.REG_A, insts.getReg(insts.REG_D)); break;
+	case 0xA3: insts.and_r_r(insts.REG_A, insts.getReg(insts.REG_E)); break;
+	case 0xA4: insts.and_r_r(insts.REG_A, insts.getReg(insts.REG_H)); break;
+	case 0xA5: insts.and_r_r(insts.REG_A, insts.getReg(insts.REG_L)); break;
+	case 0xA6: insts.and_r_rr(insts.REG_A, HL); break;
+	case 0xA7: insts.and_r_r(insts.REG_A, insts.getReg(insts.REG_A)); break;
+	case 0xA8: insts.xor_r_r(insts.REG_A, insts.getReg(insts.REG_B)); break;
+	case 0xA9: insts.xor_r_r(insts.REG_A, insts.getReg(insts.REG_C)); break;
+	case 0xAA: insts.xor_r_r(insts.REG_A, insts.getReg(insts.REG_D)); break;
+	case 0xAB: insts.xor_r_r(insts.REG_A, insts.getReg(insts.REG_E)); break;
+	case 0xAC: insts.xor_r_r(insts.REG_A, insts.getReg(insts.REG_H)); break;
+	case 0xAD: insts.xor_r_r(insts.REG_A, insts.getReg(insts.REG_L)); break;
+	case 0xAE: insts.xor_r_rr(insts.REG_A, HL); break;
+	case 0xAF: insts.xor_r_r(insts.REG_A, insts.getReg(insts.REG_A)); break;
 
+
+
+	case 0xB0: insts.or_r_r(insts.REG_A, insts.getReg(insts.REG_B)); break;
+	case 0xB1: insts.or_r_r(insts.REG_A, insts.getReg(insts.REG_C)); break;
+	case 0xB2: insts.or_r_r(insts.REG_A, insts.getReg(insts.REG_D)); break;
+	case 0xB3: insts.or_r_r(insts.REG_A, insts.getReg(insts.REG_E)); break;
+	case 0xB4: insts.or_r_r(insts.REG_A, insts.getReg(insts.REG_H)); break;
+	case 0xB5: insts.or_r_r(insts.REG_A, insts.getReg(insts.REG_L)); break;
+	case 0xB6: insts.or_r_rr(insts.REG_A, HL); break;
+	case 0xB7: insts.or_r_r(insts.REG_A, insts.getReg(insts.REG_A)); break;
+	case 0xB8: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_B)); break;
+	case 0xB9: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_C)); break;
+	case 0xBA: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_D)); break;
+	case 0xBB: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_E)); break;
+	case 0xBC: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_H)); break;
+	case 0xBD: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_L)); break;
+	case 0xBE: insts.cp_r_rr(insts.REG_A, HL); break;
+	case 0xBF: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_A)); break;
+
+
+
+	case 0xC0: insts.ret(FLAG_Z, true); break; // RET NZ
+	case 0xC1: insts.pop_rr(BC); break; // POP BC
+	case 0xC2: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, true); break; // JP NZ, a16
+	case 0xC3: insts.jp_a16(); break; //JP a16
+	case 0xC4: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, true); break; //CALL NZ, a16
+	case 0xC5: insts.push_rr(BC); break; // PUSH BC
+	case 0xC6: insts.add_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break; // ADD A, a8
+	case 0xC7: insts.rst_addr(0x00);
+	case 0xC8: insts.ret(FLAG_Z, false); break; // RET Z
+	case 0xC9: insts.o_ret(); break; // RET
+	case 0xCA: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; // JP Z, a16
+	//case 0xCB: insts.cb_prefix(); break; // CB PREFIX
+	case 0xCC: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; //CALL Z, a16
+	case 0xCD: insts.call_a16(); // CALL a16
+	case 0xCE: insts.adc_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++)));
+	case 0xCF: insts.rst_addr(0x08);
+
+
+
+	case 0xD0: insts.ret(FLAG_C, true); break; // RET NC
+	case 0xD1: insts.pop_rr(DE); break; // POP DE
+	case 0xD2: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, true); break; // JP NC, a16
+	case 0xD3: insts.jp_a16(); break; //JP a16
+	case 0xD4: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, true); break; //CALL NC, a16
+	case 0xD5: insts.push_rr(DE); break; // PUSH DE
+	case 0xD6: insts.sub_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break; // ADD A, a8
+	case 0xD7: insts.rst_addr(0x10);
+	case 0xD8: insts.ret(FLAG_C, false); break; // RET C
+	case 0xD9: insts.o_ret(); cpu.IME = true; break; // RETI
+	case 0xDA: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, false); break; // JP C, a16
+	case 0xDB: /*nothing*/ break; // nothing
+	case 0xDC: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, false); break; //CALL C, a16
+	case 0xDD: /*nothing*/ break; // nothing
+	case 0xDE: insts.sbc_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++)));
+	case 0xDF: insts.rst_addr(0x18);
+
+
+
+	case 0xE0: addr = 0xFF00 + bus.bus_read(cpu.PC++); bus.bus_write(addr, cpu.AF.hi); break; // LDH (a8),A
+	case 0xE1: insts.pop_rr(HL); break; // POP HL
+	case 0xE2: addr = 0xFF00 + cpu.BC.lo; bus.bus_write(addr, cpu.AF.hi); break; // LD (C), A
+	case 0xE3: /*nothing*/ break;
+	case 0xE4: /*nothing*/ break;
+	case 0xE5: insts.push_rr(HL); break; // PUSH HL
+	case 0xE6: insts.and_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
+	case 0xE7: insts.rst_addr(0x20); // RST h20
+	case 0xE8: insts.add_sp_r8(static_cast<int8_t>(bus.bus_read(PC++))); break; // ADD SP, a8
+	case 0xE9: PC = HL.full; break; // JP a16
+	case 0xEA: insts.ld_a16_a(); break; // LD a16, A
+	case 0xEB: /*nothing*/ break; // nothing
+	case 0xEC: /*nothing*/ break; // nothing
+	case 0xED: /*nothing*/ break; // nothing
+	case 0xEE: insts.xor_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
+	case 0xEF: insts.rst_addr(0x28);
+
+
+	case 0xF0: offset = bus.bus_read(PC++); addr = 0xFF00 | offset; AF.hi = bus.bus_read(addr); break;
+	case 0xF1: insts.pop_rr(AF); AF.lo &= 0xf0; break; // POP AF
+	case 0xF2: addr = 0xFF00 + insts.getReg(insts.REG_C); AF.hi = bus.bus_read(addr); break; // LD A,(C)
+	case 0xF3: tempDisableIME = 1; /* disable IME after next instruction*/ break; // DI
+	case 0xF4: /*nothing*/ break; // nothing
+	case 0xF5: insts.push_rr(AF); break; // PUSH AF
+	case 0xF6: insts.or_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
+	case 0xF7: insts.rst_addr(0x30); // RST h30
+	case 0xF8: insts.ld_hl_sp_r8(); break;
+	case 0xF9: SP = HL.full; break; // LD SP,HL
+	case 0xFA: insts.ld_a_a16(); break; // LD A, a16
+	case 0xFB: tempDisableIME = 4; /* enable IME after next instruction*/ break; // EI
+	case 0xFC: /*nothing*/ break; // nothing
+	case 0xFD: /*nothing*/ break; // nothing
+	case 0xFE: insts.cp_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
+	case 0xFF: insts.rst_addr(0x38); break;
+
+
+	
 		/*
 		
-		
-		case 0xA0:  // AND B
-			and_(registers->b);
-			break;
-		case 0xA1:  // AND C
-			and_(registers->c);
-			break;
-		case 0xA2:  // AND D
-			and_(registers->d);
-			break;
-		case 0xA3:  // AND E
-			and_(registers->e);
-			break;
-		case 0xA4:  // AND H
-			and_(registers->h);
-			break;
-		case 0xA5:  // AND l
-			and_(registers->l);
-			break;
-		case 0xA6:  // AND (HL)
-			and_(mmu->read_byte(registers->hl));
-			break;
-		case 0xA7:  // AND A
-			and_(registers->a);
-			break;
-		case 0xA8:  // XOR B
-			xor_(registers->b);
-			break;
-		case 0xA9:  // XOR C
-			xor_(registers->c);
-			break;
-		case 0xAA:  // XOR D
-			xor_(registers->d);
-			break;
-		case 0xAB:  // XOR E
-			xor_(registers->e);
-			break;
-		case 0xAC:  // XOR H
-			xor_(registers->h);
-			break;
-		case 0xAD:  // XOR L
-			xor_(registers->l);
-			break;
-		case 0xAE:  // XOR (HL)
-			xor_(mmu->read_byte(registers->hl));
-			break;
-		case 0xAF:  // XOR A
-			xor_(registers->a);
-			break;
-		case 0xB0:  // OR B
-			or_(registers->b);
-			break;
-		case 0xB1:  // OR C
-			or_(registers->c);
-			break;
-		case 0xB2:  // OR D
-			or_(registers->d);
-			break;
-		case 0xB3:  // OR E
-			or_(registers->e);
-			break;
-		case 0xB4:  // OR H
-			or_(registers->h);
-			break;
-		case 0xB5:  // OR L
-			or_(registers->l);
-			break;
-		case 0xB6:  // OR (HL)
-			or_(mmu->read_byte(registers->hl));
-			break;
-		case 0xB7:  // OR A
-			or_(registers->a);
-			break;
-		case 0xB8:  // CP B
-			cp(registers->b);
-			break;
-		case 0xB9:  // CP C
-			cp(registers->c);
-			break;
-		case 0xBA:  // CP D
-			cp(registers->d);
-			break;
-		case 0xBB:  // CP E
-			cp(registers->e);
-			break;
-		case 0xBC:  // CP H
-			cp(registers->h);
-			break;
-		case 0xBD:  // CP L
-			cp(registers->l);
-			break;
-		case 0xBE:  // CP (HL)
-			cp(mmu->read_byte(registers->hl));
-			break;
-		case 0xBF:  // CP A
-			cp(registers->a);
-			break;
-		case 0xC0:  // RET NZ
-			ret(!registers->is_flag_set(FLAG_ZERO));
-			break;
-		case 0xC1:  // POP BC
-			registers->bc = mmu->read_short_stack(&registers->sp);
-			break;
-		case 0xC2:  // JP NZ, nn
-			jump(!registers->is_flag_set(FLAG_ZERO));
-			break;
-		case 0xC3:  // JP nn
-			registers->pc = mmu->read_short(registers->pc);
-			break;
-		case 0xC4:  // CALL NZ, nn
-			call(!registers->is_flag_set(FLAG_ZERO));
-			break;
-		case 0xC5:  // PUSH BC
-			mmu->write_short_stack(&registers->sp, registers->bc);
-			break;
-		case 0xC6:  // ADD A, n
-			add(&registers->a, mmu->read_byte(registers->pc++));
-			break;
-		case 0xC7:  // RST $00
-			mmu->write_short_stack(&registers->sp, registers->pc++);
-			registers->pc = 0x0000;
-			break;
-		case 0xC8:  // RET Z
-			ret(registers->is_flag_set(FLAG_ZERO));
-			break;
-		case 0xC9:  // RET
-			registers->pc = mmu->read_short_stack(&registers->sp);
-			break;
-		case 0xCA:  // JP Z, nn
-			jump(registers->is_flag_set(FLAG_ZERO));
-			break;
-		case 0xCB:
-			extended_execute(mmu->read_byte(registers->pc++));
-			// registers->pc++;
-			break;
-		case 0xCC:  // CALL Z, nn
-			call(registers->is_flag_set(FLAG_ZERO));
-			break;
-
-		case 0xCD:  // CALL nn
-		{
-			uint16_t operand = mmu->read_short(registers->pc);
-			registers->pc += 2;
-			mmu->write_short_stack(&registers->sp, registers->pc);
-			registers->pc = operand;
-		} break;
-		case 0xCE:  // ADC A, n
-			adc(mmu->read_byte(registers->pc++));
-			break;
-		case 0xCF:  // RST $08
-			mmu->write_short_stack(&registers->sp, registers->pc++);
-			registers->pc = 0x0008;
-			break;
-		case 0xD0:  // RET NC
-			ret(!registers->is_flag_set(FLAG_CARRY));
-			break;
-		case 0xD1:  // POP DE
-			registers->de = mmu->read_short_stack(&registers->sp);
-			break;
-		case 0xD2:  // JP NC, nn
-			jump(!registers->is_flag_set(FLAG_CARRY));
-			break;
-		case 0xD4:  // CALL NC, nn
-			call(!registers->is_flag_set(FLAG_CARRY));
-			break;
-		case 0xD5:  // PUSH DE
-			mmu->write_short_stack(&registers->sp, registers->de);
-			break;
-		case 0xD6:  // SUB n
-			sub(mmu->read_byte(registers->pc++));
-			break;
-		case 0xD7:  // RST $10
-			mmu->write_short_stack(&registers->sp, registers->pc++);
-			registers->pc = 0x0010;
-			break;
-		case 0xD8:  // RET C
-			ret(registers->is_flag_set(FLAG_CARRY));
-			break;
-		case 0xD9:  // RETI
-			interrupts->set_master_flag(true);
-			registers->pc = mmu->read_short_stack(&registers->sp);
-			break;
-		case 0xDA:  // JP C, nn
-			jump(registers->is_flag_set(FLAG_CARRY));
-			break;
-		case 0xDC:  // CALL C, nn
-			call(registers->is_flag_set(FLAG_CARRY));
-			break;
-		case 0xDE:  // SUB n
-			sbc(mmu->read_byte(registers->pc++));
-			break;
-		case 0xDF:  // RST $18
-			mmu->write_short_stack(&registers->sp, registers->pc++);
-			registers->pc = 0x0018;
-			break;
-		case 0xE0:  // LD ($FF00+n), A
-			mmu->write_byte(0xff00 + mmu->read_byte(registers->pc++), registers->a);
-			break;
-		case 0xE1:  // POP HL
-			registers->hl = mmu->read_short_stack(&registers->sp);
-			break;
-		case 0xE2:  // LD ($FF00+C), A
-			mmu->write_byte(0xff00 + registers->c, registers->a);
-			break;
-		case 0xE5:  // PUSH HL
-			mmu->write_short_stack(&registers->sp, registers->hl);
-			break;
-		case 0xE6:  // AND n
-			and_(mmu->read_byte(registers->pc++));
-			break;
-		case 0xE7:  // RST $20
-			mmu->write_short_stack(&registers->sp, registers->pc++);
-			registers->pc = 0x0020;
-			break;
-		case 0xE8:  // ADD SP, n
-			add(&registers->sp, (int8_t)mmu->read_byte(registers->pc++));
-			break;
-		case 0xE9:  // JP HL
-			registers->pc = registers->hl;
-			break;
-		case 0xEA:  // LD (nn), A
-			mmu->write_byte(mmu->read_short(registers->pc), registers->a);
-			registers->pc += 2;
-			break;
-		case 0xEE:  // XOR n
-			xor_(mmu->read_byte(registers->pc++));
-			break;
-		case 0xEF:  // RST $28
-			mmu->write_short_stack(&registers->sp, registers->pc++);
-			registers->pc = 0x0028;
-			break;
 		case 0xF0:  // LD A, ($FF00+n)
 			registers->a = mmu->read_byte(0xff00 + mmu->read_byte(registers->pc++));
 			break;
@@ -606,9 +503,9 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 			break;*/
 	default:
 
-		//printf("[ERROR] Unknown opcode: 0x%02x at 0x%04x | ", opcode, PC);
+		printf("[ERROR] Unknown opcode: 0x%02x at 0x%04x | ", opcode, PC);
 		//printf("DIV: %d\n", mmu->timer.div);
-		//printf("Cycles: %d\n", t_cycles);
+		printf("Cycles: %d\n", t_cycles);
 		return;
 		break;
 	}

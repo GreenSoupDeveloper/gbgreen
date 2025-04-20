@@ -27,7 +27,8 @@ public:
     };
 
     RegisterPair AF, BC, DE, HL;
-    uint16_t SP, PC;
+    uint16_t SP = 0xFFFE;
+    uint16_t PC = 0x100;
 
     uint8_t currOpcode = 0x00;
 
@@ -39,7 +40,6 @@ public:
     bool IME = false; // Interrupt Master Enable
     bool halted = false;
     bool haltBug = false;
-    bool interrupts_enabled;
 
     const uint8_t nintendoLogo[0x30] = {
         0xCE, 0xED, 0x66, 0x66, 0xCC, 0x0D, 0x00, 0x0B, 0x03, 0x73, 0x00, 0x83, 0x00, 0x0C, 0x00, 0x0D,
