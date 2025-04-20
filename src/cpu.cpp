@@ -392,7 +392,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xC8: insts.ret(FLAG_Z, false); break; // RET Z
 	case 0xC9: insts.o_ret(); break; // RET
 	case 0xCA: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; // JP Z, a16
-	//case 0xCB: insts.cb_prefix(); break; // CB PREFIX
+	case 0xCB: insts.cb_prefix(); break; // CB PREFIX
 	case 0xCC: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; //CALL Z, a16
 	case 0xCD: insts.call_a16(); // CALL a16
 	case 0xCE: insts.adc_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++)));
@@ -456,51 +456,6 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 
 	
-		/*
-		
-		case 0xF0:  // LD A, ($FF00+n)
-			registers->a = mmu->read_byte(0xff00 + mmu->read_byte(registers->pc++));
-			break;
-		case 0xF1:  // POP AF
-			registers->af = mmu->read_short_stack(&registers->sp);
-			registers->f &= 0xf0;  // Reset the 4 unused bits
-			break;
-		case 0xF2:  // LD A, (C)
-			registers->a = mmu->read_byte(0xff00 + registers->c);
-			break;
-		case 0xF3:  // DI
-			interrupts->set_master_flag(false);
-			break;
-		case 0xF5:  // PUSH AF
-			mmu->write_short_stack(&registers->sp, registers->af);
-			break;
-		case 0xF6:  // OR n
-			or_(mmu->read_byte(registers->pc++));
-			break;
-		case 0xF7:  // RST $30
-			mmu->write_short_stack(&registers->sp, registers->pc++);
-			registers->pc = 0x0030;
-			break;
-		case 0xF8:  // LDHL SP, n
-			ldhl(mmu->read_byte(registers->pc++));
-			break;
-		case 0xF9:  // LD SP, HL
-			registers->sp = registers->hl;
-			break;
-		case 0xFA:  // LD A, (nn)
-			registers->a = mmu->read_byte(mmu->read_short(registers->pc));
-			registers->pc += 2;
-			break;
-		case 0xFB:  // NI
-			interrupts->set_master_flag(true);
-			break;
-		case 0xFE:  // CP n
-			cp_n(mmu->read_byte(registers->pc++));
-			break;
-		case 0xFF:  // RST $38
-			mmu->write_short_stack(&registers->sp, registers->pc++);
-			registers->pc = 0x0038;
-			break;*/
 	default:
 
 		printf("[ERROR] Unknown opcode: 0x%02x at 0x%04x | ", opcode, PC);
@@ -515,8 +470,9 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 void CPU::Cycle() {
 	if (!halted) {
 
-		uint8_t opcode = bus.bus_read(PC++);
+		uint8_t opcode = bus.bus_read(PC);
 		currOpcode = opcode;
+		PC++;
 
 
 

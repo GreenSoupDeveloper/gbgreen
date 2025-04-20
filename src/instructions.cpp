@@ -5,6 +5,7 @@
 #include <fstream>
 #include <stdint.h>
 #include <bus.h>
+#include <ext_instructions.h>
 
 
 void Instruction::setFlag(CPU::Flag flag, bool value) {
@@ -489,7 +490,7 @@ void Instruction::o_ret() {
 
 void Instruction::cb_prefix() {
 	uint8_t opcode = bus.bus_read(cpu.PC++);
-	//ExtendedInsts_Execute(opcode); <-- implement that later.
+	extInsts.ExecuteExtInstruction(opcode);
 }
 void Instruction::call_a16() {
 	// Fetch the 16-bit address from the instruction

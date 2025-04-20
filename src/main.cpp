@@ -12,16 +12,19 @@
 #include <cartridge.h>;
 #include <bus.h>
 #include <instructions.h>
+#include <ext_instructions.h>
 
 CPU::~CPU() {}
 Cartridge::~Cartridge() {}
 Instruction::~Instruction() {}
+ExtInstruction::~ExtInstruction() {}
 CPU cpu;
 Tools tools;
 Emulator emu;
 Cartridge cart;
 Bus bus;
 Instruction insts;
+ExtInstruction extInsts;
 
 
 /* Called once at startup */
