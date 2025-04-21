@@ -103,59 +103,7 @@ void UpdatePixels() {
 
 	SDL_RenderPresent(emu.renderer);
 }
-/* Called once per frame */
-SDL_AppResult SDL_AppIterate(void* appstate)
-{
 
-	if (emu.paused) {
-		if (emu.menuItemOpened == 0) {
-			if (emu.menuItemSelected == 0)
-				tools.RenderToDisplay("assets/menu1_sel1");
-			else if (emu.menuItemSelected == 1)
-				tools.RenderToDisplay("assets/menu1_sel2");
-			else if (emu.menuItemSelected == 2)
-				tools.RenderToDisplay("assets/menu1_sel3");
-			else
-				tools.RenderToDisplay("assets/menu1_sel4");
-		}
-		else {
-			if (emu.menuItemSelected == 0) {
-				if (emu.menuItemOptionSelected == 0)
-					tools.readPaletteFile("palettes/Monochrome.gbcp");
-				else if (emu.menuItemOptionSelected == 1)
-					tools.readPaletteFile("palettes/Green.gbcp");
-				else
-					tools.readPaletteFile("palettes/VeryGreen.gbcp");
-
-
-				if (emu.menuItemOptionSelected == 0)
-					tools.RenderToDisplay("assets/menu2_sel1-1");
-				else if (emu.menuItemOptionSelected == 1)
-					tools.RenderToDisplay("assets/menu2_sel1-2");
-				else
-					tools.RenderToDisplay("assets/menu2_sel1-3");
-			}
-		}
-
-	}
-	else {
-		if (!emu.romLoaded) {
-			tools.RenderToDisplay("assets/title");
-			emu.menuItemSelected = 0;
-			emu.menuItemOpened = 0;
-		}
-	}
-	if (emu.romLoaded) {
-		cpu.Cycle();
-	}
-	//cpu.d_PrintState();
-
-	UpdatePixels();
-	SDL_Delay(100);
-	emu.ticks++;
-
-	return SDL_APP_CONTINUE;
-}
 
 
 
@@ -312,4 +260,57 @@ void SDL_AppQuit(void* appstate, SDL_AppResult result)
 	if (emu.window) SDL_DestroyWindow(emu.window);
 
 	SDL_Log("shutting down emulator..");
+}
+/* Called once per frame */
+SDL_AppResult SDL_AppIterate(void* appstate)
+{
+
+	if (emu.paused) {
+		if (emu.menuItemOpened == 0) {
+			if (emu.menuItemSelected == 0)
+				tools.RenderToDisplay("assets/menu1_sel1");
+			else if (emu.menuItemSelected == 1)
+				tools.RenderToDisplay("assets/menu1_sel2");
+			else if (emu.menuItemSelected == 2)
+				tools.RenderToDisplay("assets/menu1_sel3");
+			else
+				tools.RenderToDisplay("assets/menu1_sel4");
+		}
+		else {
+			if (emu.menuItemSelected == 0) {
+				if (emu.menuItemOptionSelected == 0)
+					tools.readPaletteFile("palettes/Monochrome.gbcp");
+				else if (emu.menuItemOptionSelected == 1)
+					tools.readPaletteFile("palettes/Green.gbcp");
+				else
+					tools.readPaletteFile("palettes/VeryGreen.gbcp");
+
+
+				if (emu.menuItemOptionSelected == 0)
+					tools.RenderToDisplay("assets/menu2_sel1-1");
+				else if (emu.menuItemOptionSelected == 1)
+					tools.RenderToDisplay("assets/menu2_sel1-2");
+				else
+					tools.RenderToDisplay("assets/menu2_sel1-3");
+			}
+		}
+
+	}
+	else {
+		if (!emu.romLoaded) {
+			tools.RenderToDisplay("assets/title");
+			emu.menuItemSelected = 0;
+			emu.menuItemOpened = 0;
+		}
+	}
+	if (emu.romLoaded) {
+		cpu.Cycle();
+	}
+	//cpu.d_PrintState();
+
+	UpdatePixels();
+	SDL_Delay(10);
+	emu.ticks++;
+
+	return SDL_APP_CONTINUE;
 }

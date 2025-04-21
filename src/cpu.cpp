@@ -14,19 +14,18 @@ CPU::CPU()
 {
 	//if its not bootrom
 	PC = 0x100; //is it 0x100 or 0x0ff?
-	AF.hi = 0x01;
+	AF.full = 0x0100;
 }
 //helper stuff here..
 void CPU::halt() {
-	/*if (!IME && (IE & IF) != 0) {
+	if (!IME && (bus.IE & bus.IF) != 0) {
 		// HALT bug triggers
 		haltBug = true;
 	}
 	else {
 		halted = true;
-	}*/
-	temp_t_cycles += 4;
-	std::cout << "HALTEDDDDDDDD!!!!\n";
+	}
+	std::cout << "HALTEDDDDDDDD!!!! | ";
 }
 
 
@@ -90,58 +89,62 @@ uint16_t CPU::Read16(uint16_t addr) {
 	uint8_t hi = bus.bus_read(addr + 1);
 	return lo | (hi << 8);
 }
+bool CPU::InterruptCheck(uint16_t address, interrupt_type it) {
+	if (bus.IF & it && bus.IE & it) {
+		Push16(address);
+		PC = address;
+		bus.IF &= ~it;
+		halted = false;
+	    IME = false;
+		temp_t_cycles += 20;
 
+		return true;
+	}
+
+	return false;
+}
 void CPU::HandleInterrupt() {
-	
-	/*uint8_t triggered = IE & IF;
-	if (triggered == 0)
+
+	if (InterruptCheck(0x40, IT_VBLANK)) {
+
+    } else if (InterruptCheck(0x48, IT_LCD_STAT)) {
+
+    } else if (InterruptCheck(0x50, IT_TIMER)) {
+
+    }  else if (InterruptCheck(0x58, IT_SERIAL)) {
+
+    }  else if (InterruptCheck(0x60, IT_JOYPAD)) {
+
+	}
+	else
 		return;
+	printf("interrupt woked cpu up\n");
+}
+void CPU::RequestInterrupt(interrupt_type t) {
 
-	for (int i = 0; i < 5; ++i) {
-		if (triggered & (1 << i)) {
-			// Clear halted state
-			halted = false;
-
-			// Clear IF bit for the interrupt
-			IF &= ~(1 << i);
-
-			// Disable IME so we don't nest interrupts
-			IME = false;
-
-			// Push current PC to stack
-			Push16(PC);
-
-			// Jump to interrupt vector
-			switch (i) {
-			case 0: PC = 0x40; break; // V-Blank
-			case 1: PC = 0x48; break; // LCD STAT
-			case 2: PC = 0x50; break; // Timer
-			case 3: PC = 0x58; break; // Serial
-			case 4: PC = 0x60; break; // Joypad
-			}
-
-			return; // Only handle one interrupt per call
-		}
-	} coming soon*/
 }
 
-int tempDisableIME = 0;
+int imeAfterNextInsts = 0;
 uint16_t tempPC = 0x100;
+uint8_t tempA, tempF, tempIF, tempIE;
+uint16_t tempBC, tempDE, tempHL;
+
 void CPU::ExecuteInstruction(uint8_t opcode) {
 	uint8_t value, result, offset;
 	uint16_t addr;
-	if (tempDisableIME == 1) {
-		tempDisableIME++;
-	}else if (tempDisableIME == 2) {
+	if (imeAfterNextInsts == 1) {
+		imeAfterNextInsts++;
+	}
+	else if (imeAfterNextInsts == 2) {
 		IME = false;
-		tempDisableIME = 0;
+		imeAfterNextInsts = 0;
 	}
-	if (tempDisableIME == 4) {
-		tempDisableIME++;
+	if (imeAfterNextInsts == 4) {
+		imeAfterNextInsts++;
 	}
-	else if (tempDisableIME == 5) {
+	else if (imeAfterNextInsts == 5) {
 		IME = true;
-		tempDisableIME = 0;
+		imeAfterNextInsts = 0;
 	}
 	size_t size = sizeof(cart.rom_data);
 	//std::cout << "wram Used: " << size << "\n";
@@ -223,9 +226,9 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x39: insts.add_hl_rr(SP); break; // ADD HL, SP
 	case 0x3A: insts.ld_a_addr_rr(HL, -1); break; // LD A, (HL-)
 	case 0x3B: SP--; break; // DEC SP
-	case 0x3C: insts.inc_r(insts.REG_A); break; // INC L
-	case 0x3D: insts.dec_r(insts.REG_A); break; // DEC L
-	case 0x3E: insts.ld_r_n(insts.REG_A, bus.bus_read(PC++)); break; // LD L, n
+	case 0x3C: insts.inc_r(insts.REG_A); break; // INC A
+	case 0x3D: insts.dec_r(insts.REG_A); break; // DEC A
+	case 0x3E: insts.ld_r_n(insts.REG_A, bus.bus_read(PC++)); break; // LD A, n
 	case 0x3F: insts.setFlag(FLAG_N, false); insts.setFlag(FLAG_H, false); insts.setFlag(FLAG_C, !insts.getFlag(FLAG_C)); break; // CCF
 
 
@@ -389,15 +392,15 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xC4: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, true); break; //CALL NZ, a16
 	case 0xC5: insts.push_rr(BC); break; // PUSH BC
 	case 0xC6: insts.add_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break; // ADD A, a8
-	case 0xC7: insts.rst_addr(0x00);
+	case 0xC7: insts.rst_addr(0x00); break;
 	case 0xC8: insts.ret(FLAG_Z, false); break; // RET Z
 	case 0xC9: insts.o_ret(); break; // RET
 	case 0xCA: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; // JP Z, a16
 	case 0xCB: insts.cb_prefix(); break; // CB PREFIX
 	case 0xCC: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; //CALL Z, a16
-	case 0xCD: insts.call_a16(); // CALL a16
-	case 0xCE: insts.adc_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++)));
-	case 0xCF: insts.rst_addr(0x08);
+	case 0xCD: insts.call_a16(); break; // CALL a16
+	case 0xCE: insts.adc_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
+	case 0xCF: insts.rst_addr(0x08); break;
 
 
 
@@ -408,15 +411,15 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xD4: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, true); break; //CALL NC, a16
 	case 0xD5: insts.push_rr(DE); break; // PUSH DE
 	case 0xD6: insts.sub_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break; // ADD A, a8
-	case 0xD7: insts.rst_addr(0x10);
+	case 0xD7: insts.rst_addr(0x10); break;
 	case 0xD8: insts.ret(FLAG_C, false); break; // RET C
 	case 0xD9: insts.o_ret(); cpu.IME = true; break; // RETI
 	case 0xDA: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, false); break; // JP C, a16
 	case 0xDB: /*nothing*/ break; // nothing
 	case 0xDC: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, false); break; //CALL C, a16
 	case 0xDD: /*nothing*/ break; // nothing
-	case 0xDE: insts.sbc_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++)));
-	case 0xDF: insts.rst_addr(0x18);
+	case 0xDE: insts.sbc_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
+	case 0xDF: insts.rst_addr(0x18); break;
 
 
 
@@ -427,7 +430,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xE4: /*nothing*/ break;
 	case 0xE5: insts.push_rr(HL); break; // PUSH HL
 	case 0xE6: insts.and_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
-	case 0xE7: insts.rst_addr(0x20); // RST h20
+	case 0xE7: insts.rst_addr(0x20); break;// RST h20
 	case 0xE8: insts.add_sp_r8(static_cast<int8_t>(bus.bus_read(PC++))); break; // ADD SP, a8
 	case 0xE9: PC = HL.full; break; // JP a16
 	case 0xEA: insts.ld_a16_a(); break; // LD a16, A
@@ -435,28 +438,28 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xEC: /*nothing*/ break; // nothing
 	case 0xED: /*nothing*/ break; // nothing
 	case 0xEE: insts.xor_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
-	case 0xEF: insts.rst_addr(0x28);
+	case 0xEF: insts.rst_addr(0x28); break;
 
 
 	case 0xF0: offset = bus.bus_read(PC++); addr = 0xFF00 | offset; AF.hi = bus.bus_read(addr); break;
 	case 0xF1: insts.pop_rr(AF); AF.lo &= 0xf0; break; // POP AF
 	case 0xF2: addr = 0xFF00 + insts.getReg(insts.REG_C); AF.hi = bus.bus_read(addr); break; // LD A,(C)
-	case 0xF3: tempDisableIME = 1; /* disable IME after next instruction*/ break; // DI
+	case 0xF3: imeAfterNextInsts = 1; /* disable IME after next instruction*/ break; // DI
 	case 0xF4: /*nothing*/ break; // nothing
 	case 0xF5: insts.push_rr(AF); break; // PUSH AF
 	case 0xF6: insts.or_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
-	case 0xF7: insts.rst_addr(0x30); // RST h30
+	case 0xF7: insts.rst_addr(0x30); break; // RST h30
 	case 0xF8: insts.ld_hl_sp_r8(); break;
 	case 0xF9: SP = HL.full; break; // LD SP,HL
 	case 0xFA: insts.ld_a_a16(); break; // LD A, a16
-	case 0xFB: tempDisableIME = 4; /* enable IME after next instruction*/ break; // EI
+	case 0xFB: imeAfterNextInsts = 4; /* enable IME after next instruction*/ break; // EI
 	case 0xFC: /*nothing*/ break; // nothing
 	case 0xFD: /*nothing*/ break; // nothing
 	case 0xFE: insts.cp_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
 	case 0xFF: insts.rst_addr(0x38); break;
 
 
-	
+
 	default:
 
 		printf("[ERROR] Unknown opcode: 0x%02x at 0x%04x | ", opcode, tempPC);
@@ -465,7 +468,13 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 		return;
 		break;
 	}
-	printf("[INFO] Opcode 0x%02x at 0x%04x executed (%02X %02X %02X) | A: %02X B: %02X C: %02X\n", opcode, tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), AF.hi, BC.hi, BC.lo);
+	char flags[5] = { 0 }; // ZNHC + null terminator
+	flags[0] = (tempF & (1 << 7)) ? 'Z' : '-';  // Bit 7
+	flags[1] = (tempF & (1 << 6)) ? 'N' : '-';  // Bit 6
+	flags[2] = (tempF & (1 << 5)) ? 'H' : '-';  // Bit 5
+	flags[3] = (tempF & (1 << 4)) ? 'C' : '-';  // Bit 4
+	flags[4] = '\0';
+	printf("[INFO] PC: %04x | (%02X %02X %02X) Opcode 0x%02x  executed  | A: %02X F: %02X %s BC: %04X DE: %04X HL: %04X IF: %02X IE: %02X\n", tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), opcode, tempA, tempF, flags, tempBC, tempDE, tempHL, tempIF, tempIE );
 
 }
 void CPU::Cycle() {
@@ -474,8 +483,17 @@ void CPU::Cycle() {
 		uint8_t opcode = bus.bus_read(PC);
 		currOpcode = opcode;
 		tempPC = PC;
+		tempA = AF.hi;
+		tempF = AF.lo;
+		tempBC = BC.full;
+		tempDE = DE.full;
+		tempHL = HL.full;
+		tempIF = bus.IF;
+		tempIE = bus.IE;
+
 		PC++;
-		
+
+
 
 
 
@@ -486,12 +504,32 @@ void CPU::Cycle() {
 
 
 		temp_t_cycles = 0; // Reset before instruction
-	
+
 		ExecuteInstruction(opcode);
-		
+
 		t_cycles += temp_t_cycles;
 		m_cycles += temp_t_cycles / 4;
 	}
+	else {
+		t_cycles += 4;
+
+		if ((IME && (bus.IE & bus.IF & 0x1F)) || (!IME && haltBug)) {
+			halted = false;
+			printf("CPU woken by %s\n",
+				IME ? "interrupt" : "HALT bug");
+		}
+	}
+	if (IME && (bus.IE & bus.IF & 0x1F)) {
+		HandleInterrupt();
+		imeAfterNextInsts = 0;
+	}
+
+	
+	if (imeAfterNextInsts == 5) {
+		IME = true;
+		imeAfterNextInsts = 0;
+	}
+	ticks += 1;
 }
 
 

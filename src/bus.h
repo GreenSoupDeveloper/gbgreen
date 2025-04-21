@@ -12,7 +12,7 @@ public:
 	uint8_t hram[0x7F];     // High RAM (0xFF80–0xFFFE)
 	uint8_t io[0x80]; // I/O ports (0xFF00–0xFF7F)
 	uint8_t IE = 0x00;    // 0xFFFF
-	uint8_t IF = 0xE1;    // 0xFF0F
+	uint8_t IF = 0xE0;    // 0xFF0F
 	uint8_t bus_read(uint16_t addr);
 	void bus_write(uint16_t addr, uint8_t value);
 };

@@ -142,9 +142,8 @@ void Instruction::rla() {
 	setFlag(cpu.FLAG_H, false); // Always cleared
 }
 void Instruction::jr_n() {
-	int8_t r8 = static_cast<int8_t>(bus.bus_read(cpu.PC + 1)); // Read the signed byte at PC + 1
-	cpu.PC += r8;
-	cpu.PC += 2; // Since JR takes 2 bytes, move the program counter forward by 2
+	int8_t offset = static_cast<int8_t>(bus.bus_read(cpu.PC + 1));
+	cpu.PC += 2 + offset;
 }
 void Instruction::rr_r(Register8 reg) {
 	uint8_t& r = getReg(reg);
@@ -468,14 +467,17 @@ void Instruction::push_rr(CPU::RegisterPair pair) {
 	bus.bus_write(--cpu.SP, pair.lo);
 }
 void Instruction::rst_addr(uint16_t address) {
-	// 1. Push return address onto stack (little-endian)
-	cpu.SP--;
-	bus.bus_write(cpu.SP, (cpu.PC >> 8) & 0xFF);  // High byte
-	cpu.SP--;
-	bus.bus_write(cpu.SP, cpu.PC & 0xFF);         // Low byte
-
-	// 2. Jump to fixed address
-	cpu.PC = address;	
+    // 1. Store return address (current PC points to NEXT instruction)
+    uint16_t return_addr = cpu.PC;
+    
+    // 2. Push return address (big-endian: high byte first)
+    cpu.SP--;
+    bus.bus_write(cpu.SP, (return_addr >> 8) & 0xFF);  // High byte
+    cpu.SP--;
+    bus.bus_write(cpu.SP, return_addr & 0xFF);         // Low byte
+    
+    // 3. Jump to fixed address
+    cpu.PC = address;
 }
 void Instruction::o_ret() {
 	// Read the return address from the stack (little-endian)
@@ -493,19 +495,22 @@ void Instruction::cb_prefix() {
 	extInsts.ExecuteExtInstruction(opcode);
 }
 void Instruction::call_a16() {
-	// Fetch the 16-bit address from the instruction
-	uint8_t low = bus.bus_read(cpu.PC++);
-	uint8_t high = bus.bus_read(cpu.PC++);
-	uint16_t address = (high << 8) | low;
-
-	// Push current PC onto the stack (high first because Game Boy is little-endian stack-wise)
-	cpu.SP--;
-	bus.bus_write(cpu.SP, (cpu.PC >> 8) & 0xFF); // High byte
-	cpu.SP--;
-	bus.bus_write(cpu.SP, cpu.PC & 0xFF);        // Low byte
-
-	// Jump to the new address
-	cpu.PC = address;
+    // Fetch address (little-endian)
+    uint16_t addr = bus.bus_read(cpu.PC++);
+    addr |= bus.bus_read(cpu.PC++) << 8;
+    
+    // Store return address (current PC points to next instruction)
+    uint16_t return_addr = cpu.PC;
+    
+    // Push high byte first (big-endian stack)
+    bus.bus_write(--cpu.SP, (return_addr >> 8) & 0xFF);
+    bus.bus_write(--cpu.SP, return_addr & 0xFF);
+	//printf("address call a16: 0x%04x | ", addr);
+    
+    // Jump to new address
+    cpu.PC = addr;
+	
+	
 }
 void Instruction::add_sp_r8(int8_t r8) {
     uint16_t sp = cpu.SP;
@@ -529,7 +534,7 @@ void Instruction::ld_a16_a() {
 	uint16_t address = (high << 8) | low;
 
 	// Write A to memory
-	bus.bus_write(address, getReg(REG_A));
+	bus.bus_write(address, cpu.AF.hi);
 
 }
 void Instruction::ld_hl_sp_r8() {
