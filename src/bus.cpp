@@ -57,6 +57,7 @@ uint8_t Bus::bus_read(uint16_t addr) {
 	else if (addr == 0xFF0F) {
 		return IF;
 	}
+
 	else {
 		printf("[ERROR] Unknown reading address (Opcode: 0x%02X | Address: 0x%04X).. is it you or is it me?\n", cpu.currOpcode, addr);
 	}
@@ -101,6 +102,7 @@ void Bus::bus_write(uint16_t addr, uint8_t value) {
 	else if (addr == 0xFF0F) {
 		IF = value;
 	}
+	
 	else {
 		printf("[ERROR] Unknown writing address (Opcode: 0x%02X | Address: 0x%04X | Value: 0x%02X (d%d)).. is it you or is it me?\n", cpu.currOpcode, addr, value, value);
 	}
