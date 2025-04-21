@@ -261,6 +261,7 @@ void SDL_AppQuit(void* appstate, SDL_AppResult result)
 	std::string thing;
 	int aaa = 0;
 	for (uint16_t i = 0xC000; i < 0xFDFF; i++) {
+		//if(bus.bus_read(i) != 0x00)
 		thing += bus.bus_read(i);
 		
 	}
@@ -327,7 +328,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 	//cpu.d_PrintState();
 
 	UpdatePixels();
-	SDL_Delay(10);
+	SDL_Delay(50);
 	emu.ticks++;
 
 	return SDL_APP_CONTINUE;

@@ -39,6 +39,12 @@ uint8_t Bus::bus_read(uint16_t addr) {
 	else if (addr >= 0xFE00 && addr <= 0xFE9F) {
 		return oam[addr - 0xFE00];
 	}
+	else if (addr >= 0xFEA0 && addr <= 0xFEFF) {
+		// Technically unusable, but some games poke here
+		// You can safely ignore or log it, just don’t crash
+		printf("[INFO] ROM is trying to read the forbidden area. Address: 0x%04X\n", addr);
+		return 0xFF;
+	}
 	else if (addr >= 0xFF00 && addr <= 0xFF7F) {
 		return io[addr - 0xFF00];
 	}
@@ -77,6 +83,11 @@ void Bus::bus_write(uint16_t addr, uint8_t value) {
 	}
 	else if (addr >= 0xFE00 && addr <= 0xFE9F) {
 		oam[addr - 0xFE00] = value;
+	}
+	else if (addr >= 0xFEA0 && addr <= 0xFEFF) {
+		// Technically unusable, but some games poke here
+		// You can safely ignore or log it, just don’t crash
+		printf("[INFO] ROM is trying to write to the forbidden area. Address: 0x%04X\n", addr);
 	}
 	else if (addr >= 0xFF00 && addr <= 0xFF7F) {
 		io[addr - 0xFF00] = value;

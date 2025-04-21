@@ -15,19 +15,24 @@ CPU::CPU()
 	//if its not bootrom
 	PC = 0x100; //is it 0x100 or 0x0ff?
 	AF.full = 0x0130;
+	SP = 0xFFFE;
 }
+
 //helper stuff here..
+bool haltedshow = false;
+
 void CPU::halt() {
 	if (!IME && (bus.IE & bus.IF) != 0) {
 		// HALT bug triggers
 		haltBug = true;
+		haltedshow = false;
 	}
 	else {
 		halted = true;
+		haltedshow = true;
 	}
 	
 }
-
 
 
 
@@ -475,9 +480,10 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	flags[3] = (tempF & (1 << 4)) ? 'C' : '-';  // Bit 4
 	flags[4] = '\0';
 	
-	printf("[INFO] PC: %04X | (%02X %02X %02X) Opcode 0x%02X executed | A: %02X F: %02X (b%s) %s BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n", tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), opcode, tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), flags, tempBC, tempDE, tempHL, tempSP, tempIF, tempIE );
+	printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) %s BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), flags, tempBC, tempDE, tempHL, tempSP, tempIF, tempIE );
 
 }
+
 void CPU::Cycle() {
 	if (!halted) {
 
@@ -511,10 +517,16 @@ void CPU::Cycle() {
 
 		t_cycles += temp_t_cycles;
 		m_cycles += temp_t_cycles / 4;
+	 
+		 
 	}
 	else {
+		
 		t_cycles += 4;
-		std::cout << "Halted!\n";
+		if (haltedshow) {
+			std::cout << "Halted!\n";
+			haltedshow = false;
+		}
 		if ((IME && (bus.IE & bus.IF & 0x1F)) || (!IME && haltBug)) {
 			halted = false;
 			printf("CPU woken by %s\n",
