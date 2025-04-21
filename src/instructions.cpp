@@ -97,6 +97,8 @@ void Instruction::ld_a16_sp() {
 	uint16_t addr = (hi << 8) | lo;
 	bus.bus_write(addr, cpu.SP & 0xFF);
 	bus.bus_write(addr + 1, (cpu.SP >> 8) & 0xFF);
+	//printf("val: %02X\n", bus.bus_read(addr));
+
 }
 void Instruction::add_hl_rr(const uint16_t rr) {
 	uint32_t result = cpu.HL.full + rr;
@@ -465,6 +467,8 @@ void Instruction::call_f(uint16_t address, CPU::Flag flag, bool ifNot) {
 void Instruction::push_rr(CPU::RegisterPair pair) {
 	bus.bus_write(--cpu.SP, pair.hi);  // Push high byte first (e.g., B for BC)
 	bus.bus_write(--cpu.SP, pair.lo);
+	//printf("stack pointer: %04x\n", cpu.SP);
+
 }
 void Instruction::rst_addr(uint16_t address) {
     // 1. Store return address (current PC points to NEXT instruction)

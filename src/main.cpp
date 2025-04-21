@@ -13,11 +13,13 @@
 #include <bus.h>
 #include <instructions.h>
 #include <ext_instructions.h>
+#include <io.h>
 
 CPU::~CPU() {}
 Cartridge::~Cartridge() {}
 Instruction::~Instruction() {}
 ExtInstruction::~ExtInstruction() {}
+IO::~IO() {}
 CPU cpu;
 Tools tools;
 Emulator emu;
@@ -25,6 +27,7 @@ Cartridge cart;
 Bus bus;
 Instruction insts;
 ExtInstruction extInsts;
+IO io;
 
 
 /* Called once at startup */
@@ -255,6 +258,20 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 /* Called once at shutdown */
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
+	std::string thing;
+	int aaa = 0;
+	for (uint16_t i = 0xC000; i < 0xFDFF; i++) {
+		thing += bus.bus_read(i);
+		
+	}
+	std::ofstream configFile("wram_dump.txt");
+
+	
+
+	configFile << thing << std::endl;
+
+	configFile.close();
+	
 	if (emu.texture) SDL_DestroyTexture(emu.texture);
 	if (emu.renderer) SDL_DestroyRenderer(emu.renderer);
 	if (emu.window) SDL_DestroyWindow(emu.window);
@@ -264,6 +281,7 @@ void SDL_AppQuit(void* appstate, SDL_AppResult result)
 /* Called once per frame */
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
+
 
 	if (emu.paused) {
 		if (emu.menuItemOpened == 0) {

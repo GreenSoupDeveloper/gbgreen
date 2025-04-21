@@ -7,14 +7,14 @@
 #include <bus.h>
 #include <iomanip>
 #include <instructions.h>
+#include <io.h>
 
-
-
+#include <bitset>
 CPU::CPU()
 {
 	//if its not bootrom
 	PC = 0x100; //is it 0x100 or 0x0ff?
-	AF.full = 0x0100;
+	AF.full = 0x0130;
 }
 //helper stuff here..
 void CPU::halt() {
@@ -25,7 +25,7 @@ void CPU::halt() {
 	else {
 		halted = true;
 	}
-	std::cout << "HALTEDDDDDDDD!!!! | ";
+	
 }
 
 
@@ -127,7 +127,7 @@ void CPU::RequestInterrupt(interrupt_type t) {
 int imeAfterNextInsts = 0;
 uint16_t tempPC = 0x100;
 uint8_t tempA, tempF, tempIF, tempIE;
-uint16_t tempBC, tempDE, tempHL;
+uint16_t tempBC, tempDE, tempHL, tempSP;
 
 void CPU::ExecuteInstruction(uint8_t opcode) {
 	uint8_t value, result, offset;
@@ -215,7 +215,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 
 	case 0x30: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, true); break; // JR NC, *
-	case 0x31: SP = Read16(PC + 1); PC += 2; break; // LD SP, nn
+	case 0x31: SP = Read16(PC); PC += 2; break; // LD SP, nn
 	case 0x32: insts.ld_addr_rr_a(HL, -1); break; // LD (HL-), A
 	case 0x33: SP++; break; // INC SP
 	case 0x34: value = bus.bus_read(HL.full); result = value + 1; insts.setFlag(cpu.FLAG_Z, result == 0); insts.setFlag(cpu.FLAG_N, false); insts.setFlag(cpu.FLAG_H, (value & 0x0F) + 1 > 0x0F); bus.bus_write(HL.full, result); break; // INC (HL)
@@ -474,7 +474,8 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	flags[2] = (tempF & (1 << 5)) ? 'H' : '-';  // Bit 5
 	flags[3] = (tempF & (1 << 4)) ? 'C' : '-';  // Bit 4
 	flags[4] = '\0';
-	printf("[INFO] PC: %04x | (%02X %02X %02X) Opcode 0x%02x  executed  | A: %02X F: %02X %s BC: %04X DE: %04X HL: %04X IF: %02X IE: %02X\n", tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), opcode, tempA, tempF, flags, tempBC, tempDE, tempHL, tempIF, tempIE );
+	
+	printf("[INFO] PC: %04X | (%02X %02X %02X) Opcode 0x%02X executed | A: %02X F: %02X (b%s) %s BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n", tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), opcode, tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), flags, tempBC, tempDE, tempHL, tempSP, tempIF, tempIE );
 
 }
 void CPU::Cycle() {
@@ -490,6 +491,7 @@ void CPU::Cycle() {
 		tempHL = HL.full;
 		tempIF = bus.IF;
 		tempIE = bus.IE;
+		tempSP = SP;
 
 		PC++;
 
@@ -512,7 +514,7 @@ void CPU::Cycle() {
 	}
 	else {
 		t_cycles += 4;
-
+		std::cout << "Halted!\n";
 		if ((IME && (bus.IE & bus.IF & 0x1F)) || (!IME && haltBug)) {
 			halted = false;
 			printf("CPU woken by %s\n",
@@ -530,6 +532,8 @@ void CPU::Cycle() {
 		imeAfterNextInsts = 0;
 	}
 	ticks += 1;
+	io.dbg_update();
+	io.dbg_print();
 }
 
 
