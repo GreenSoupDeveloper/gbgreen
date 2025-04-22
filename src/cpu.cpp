@@ -14,8 +14,11 @@ CPU::CPU()
 {
 	//if its not bootrom
 	PC = 0x100; //is it 0x100 or 0x0ff?
-	AF.full = 0x0130;
+	BC.full = 0x0013;
+	DE.full = 0x00DE;
+	AF.full = 0x01B0; //0x01b0 default but eh
 	SP = 0xFFFE;
+	HL.full = 0x014D;
 }
 
 //helper stuff here..
@@ -135,7 +138,7 @@ uint8_t tempA, tempF, tempIF, tempIE;
 uint16_t tempBC, tempDE, tempHL, tempSP;
 
 void CPU::ExecuteInstruction(uint8_t opcode) {
-	uint8_t value, result, offset;
+	uint8_t value, result, offset, low, high;
 	uint16_t addr;
 	if (imeAfterNextInsts == 1) {
 		imeAfterNextInsts++;
@@ -200,7 +203,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 
 
-	case 0x20: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, true); break; // JR NZ, *
+	case 0x20: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC)), FLAG_Z, true); break; // JR NZ, *
 	case 0x21: insts.ld_rr_d16(HL); break; // LD HL, nn
 	case 0x22: insts.ld_addr_rr_a(HL, 1); break; // LD (HL+), A
 	case 0x23: HL.full++; break; // INC HL
@@ -208,7 +211,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x25: insts.dec_r(insts.REG_H); break;// DEC H
 	case 0x26: insts.ld_r_n(insts.REG_H, bus.bus_read(PC++)); break; // LD H, n
 	case 0x27: insts.daa(); break; // DAA
-	case 0x28: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; // JR Z, *
+	case 0x28: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC)), FLAG_Z, false); break; // JR Z, *
 	case 0x29: insts.add_hl_rr(HL.full); break; // ADD HL, HL
 	case 0x2A: insts.ld_a_addr_rr(HL, 1); break; // LD A, (HL+)
 	case 0x2B: HL.full--; break; // DEC HL
@@ -219,7 +222,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 
 
-	case 0x30: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, true); break; // JR NC, *
+	case 0x30: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC)), FLAG_C, true); break; // JR NC, *
 	case 0x31: SP = Read16(PC); PC += 2; break; // LD SP, nn
 	case 0x32: insts.ld_addr_rr_a(HL, -1); break; // LD (HL-), A
 	case 0x33: SP++; break; // INC SP
@@ -227,7 +230,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x35: value = bus.bus_read(HL.full); result = value - 1; insts.setFlag(cpu.FLAG_Z, result == 0); insts.setFlag(cpu.FLAG_N, true); insts.setFlag(cpu.FLAG_H, (value & 0x0F) == 0x00); bus.bus_write(HL.full, result); break;// DEC (HL)
 	case 0x36: value = bus.bus_read(PC + 1); bus.bus_write(HL.full, value); PC += 2; break; // LD (HL), n
 	case 0x37: insts.setFlag(FLAG_C, true); insts.setFlag(FLAG_N, false); insts.setFlag(FLAG_H, false); break; // SCF
-	case 0x38: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, false); break; // JR C, *
+	case 0x38: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC)), FLAG_C, false); break; // JR C, *
 	case 0x39: insts.add_hl_rr(SP); break; // ADD HL, SP
 	case 0x3A: insts.ld_a_addr_rr(HL, -1); break; // LD A, (HL-)
 	case 0x3B: SP--; break; // DEC SP
@@ -394,7 +397,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xC1: insts.pop_rr(BC); break; // POP BC
 	case 0xC2: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, true); break; // JP NZ, a16
 	case 0xC3: insts.jp_a16(); break; //JP a16
-	case 0xC4: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, true); break; //CALL NZ, a16
+	case 0xC4: low = bus.bus_read(PC++); high = bus.bus_read(PC++); addr = (high << 8) | low; insts.call_f(addr, FLAG_Z, true); break; // CALL NZ, a16
 	case 0xC5: insts.push_rr(BC); break; // PUSH BC
 	case 0xC6: insts.add_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break; // ADD A, a8
 	case 0xC7: insts.rst_addr(0x00); break;
@@ -402,7 +405,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xC9: insts.o_ret(); break; // RET
 	case 0xCA: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; // JP Z, a16
 	case 0xCB: insts.cb_prefix(); break; // CB PREFIX
-	case 0xCC: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; //CALL Z, a16
+	case 0xCC: low = bus.bus_read(PC++); high = bus.bus_read(PC++); addr = (high << 8) | low; insts.call_f(addr, FLAG_Z, false); break; // CALL Z, a16
 	case 0xCD: insts.call_a16(); break; // CALL a16
 	case 0xCE: insts.adc_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
 	case 0xCF: insts.rst_addr(0x08); break;
@@ -413,7 +416,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xD1: insts.pop_rr(DE); break; // POP DE
 	case 0xD2: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, true); break; // JP NC, a16
 	case 0xD3: insts.jp_a16(); break; //JP a16
-	case 0xD4: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, true); break; //CALL NC, a16
+	case 0xD4: low = bus.bus_read(PC++); high = bus.bus_read(PC++); addr = (high << 8) | low; insts.call_f(addr, FLAG_C, true); break; // CALL NC, a16
 	case 0xD5: insts.push_rr(DE); break; // PUSH DE
 	case 0xD6: insts.sub_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break; // ADD A, a8
 	case 0xD7: insts.rst_addr(0x10); break;
@@ -421,7 +424,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xD9: insts.o_ret(); cpu.IME = true; break; // RETI
 	case 0xDA: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, false); break; // JP C, a16
 	case 0xDB: /*nothing*/ break; // nothing
-	case 0xDC: insts.call_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, false); break; //CALL C, a16
+	case 0xDC: low = bus.bus_read(PC++); high = bus.bus_read(PC++); addr = (high << 8) | low; insts.call_f(addr, FLAG_C, false); break; // CALL C, a16
 	case 0xDD: /*nothing*/ break; // nothing
 	case 0xDE: insts.sbc_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
 	case 0xDF: insts.rst_addr(0x18); break;

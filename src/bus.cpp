@@ -24,6 +24,11 @@ uint8_t Bus::bus_read(uint16_t addr) {
 	if (addr <= 0x7FFF) {
 		return cart.rom_data[addr]; // ROM region
 	}
+	//test area
+	else if (addr == 0xFF44) { // LY
+		return 0x90; // Hardcoded for testing
+	}
+
 	else if (addr >= 0x8000 && addr <= 0x9FFF) {
 		return vram[addr - 0x8000];
 	}

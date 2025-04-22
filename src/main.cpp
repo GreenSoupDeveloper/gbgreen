@@ -106,6 +106,7 @@ void UpdatePixels() {
 
 	SDL_RenderPresent(emu.renderer);
 }
+bool stay = true;
 
 
 
@@ -125,6 +126,13 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 
 	if (event->type == SDL_EVENT_KEY_DOWN)
 	{
+		if (event->key.key == SDLK_P)
+		{
+			if (stay)
+				stay = false;
+			else
+				stay = true;
+		}
 		if (event->key.key == SDLK_ESCAPE)
 		{
 			if (emu.paused)
@@ -133,6 +141,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 				emu.paused = true;
 		}
 		if (emu.paused) {
+			
 			if (event->key.key == SDLK_UP)
 			{
 				emu.menuItemSelected -= 1;
@@ -282,54 +291,55 @@ void SDL_AppQuit(void* appstate, SDL_AppResult result)
 /* Called once per frame */
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
+	if (stay){
+
+		if (emu.paused) {
+			if (emu.menuItemOpened == 0) {
+				if (emu.menuItemSelected == 0)
+					tools.RenderToDisplay("assets/menu1_sel1");
+				else if (emu.menuItemSelected == 1)
+					tools.RenderToDisplay("assets/menu1_sel2");
+				else if (emu.menuItemSelected == 2)
+					tools.RenderToDisplay("assets/menu1_sel3");
+				else
+					tools.RenderToDisplay("assets/menu1_sel4");
+			}
+			else {
+				if (emu.menuItemSelected == 0) {
+					if (emu.menuItemOptionSelected == 0)
+						tools.readPaletteFile("palettes/Monochrome.gbcp");
+					else if (emu.menuItemOptionSelected == 1)
+						tools.readPaletteFile("palettes/Green.gbcp");
+					else
+						tools.readPaletteFile("palettes/VeryGreen.gbcp");
 
 
-	if (emu.paused) {
-		if (emu.menuItemOpened == 0) {
-			if (emu.menuItemSelected == 0)
-				tools.RenderToDisplay("assets/menu1_sel1");
-			else if (emu.menuItemSelected == 1)
-				tools.RenderToDisplay("assets/menu1_sel2");
-			else if (emu.menuItemSelected == 2)
-				tools.RenderToDisplay("assets/menu1_sel3");
-			else
-				tools.RenderToDisplay("assets/menu1_sel4");
+					if (emu.menuItemOptionSelected == 0)
+						tools.RenderToDisplay("assets/menu2_sel1-1");
+					else if (emu.menuItemOptionSelected == 1)
+						tools.RenderToDisplay("assets/menu2_sel1-2");
+					else
+						tools.RenderToDisplay("assets/menu2_sel1-3");
+				}
+			}
+
 		}
 		else {
-			if (emu.menuItemSelected == 0) {
-				if (emu.menuItemOptionSelected == 0)
-					tools.readPaletteFile("palettes/Monochrome.gbcp");
-				else if (emu.menuItemOptionSelected == 1)
-					tools.readPaletteFile("palettes/Green.gbcp");
-				else
-					tools.readPaletteFile("palettes/VeryGreen.gbcp");
-
-
-				if (emu.menuItemOptionSelected == 0)
-					tools.RenderToDisplay("assets/menu2_sel1-1");
-				else if (emu.menuItemOptionSelected == 1)
-					tools.RenderToDisplay("assets/menu2_sel1-2");
-				else
-					tools.RenderToDisplay("assets/menu2_sel1-3");
+			if (!emu.romLoaded) {
+				tools.RenderToDisplay("assets/title");
+				emu.menuItemSelected = 0;
+				emu.menuItemOpened = 0;
 			}
 		}
-
-	}
-	else {
-		if (!emu.romLoaded) {
-			tools.RenderToDisplay("assets/title");
-			emu.menuItemSelected = 0;
-			emu.menuItemOpened = 0;
-		}
-	}
 	if (emu.romLoaded) {
 		cpu.Cycle();
 	}
 	//cpu.d_PrintState();
 
 	UpdatePixels();
-	SDL_Delay(50);
+	SDL_Delay(1);
 	emu.ticks++;
+}
 
 	return SDL_APP_CONTINUE;
 }

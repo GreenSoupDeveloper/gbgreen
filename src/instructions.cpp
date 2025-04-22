@@ -53,7 +53,7 @@ void Instruction::ld_addr_rr_a(CPU::RegisterPair& reg, int ifthing) {
 	else if (ifthing == 1) {
 		reg.full++;
 	}
-	cpu.PC++;
+	
 }
 void Instruction::inc_r(Register8 reg) {
 	uint8_t& r = getReg(reg);
@@ -144,8 +144,8 @@ void Instruction::rla() {
 	setFlag(cpu.FLAG_H, false); // Always cleared
 }
 void Instruction::jr_n() {
-	int8_t offset = static_cast<int8_t>(bus.bus_read(cpu.PC + 1));
-	cpu.PC += 2 + offset;
+	int8_t offset = static_cast<int8_t>(bus.bus_read(cpu.PC));
+	cpu.PC += 1 + offset;
 }
 void Instruction::rr_r(Register8 reg) {
 	uint8_t& r = getReg(reg);
@@ -172,7 +172,7 @@ void Instruction::jr_f(int8_t r8, CPU::Flag flag, bool ifNot) {
 	}
 
 	// Always advance past the instruction (2 bytes)
-	cpu.PC += 2;
+	cpu.PC += 1;
 }
 void Instruction::daa() {
 	uint8_t& A = cpu.AF.hi;
@@ -379,18 +379,19 @@ void Instruction::or_r_rr(Register8 reg, CPU::RegisterPair pair) {
 	setFlag(cpu.FLAG_C, false);
 }
 void Instruction::cp_r_r(Register8 reg1, uint8_t reg2) {
-	uint8_t a = getReg(reg1);  // Store original values
+	uint8_t a = getReg(reg1);  // Value in A
 	uint8_t b = reg2;
+	
 	uint8_t result = a - b;
+	//printf("a: %02X | reg2: %02X | result: %d ", a, reg2, result);
 
 	// Set flags (don't modify registers)
-	setFlag(cpu.FLAG_Z, (result == 0));  // ZERO: Set if result is 0
-	setFlag(cpu.FLAG_N, true);           // SUB: Always set for CP
-	// HALF-CARRY: Check borrow from bit 4
-	setFlag(cpu.FLAG_H, ((a & 0xF) - (b & 0xF)) < 0);
-	// CARRY: Check borrow from bit 7
-	setFlag(cpu.FLAG_C, a < b);
+	setFlag(cpu.FLAG_Z, (result == 0));       // Zero flag
+	setFlag(cpu.FLAG_N, true);                // Subtraction flag
+	setFlag(cpu.FLAG_H, (a & 0xF) < (b & 0xF)); // Half-carry (borrow from bit 4)
+	setFlag(cpu.FLAG_C, a < b);               // Carry flag (borrow overall)
 }
+
 void Instruction::cp_r_rr(Register8 reg, CPU::RegisterPair pair) {
 	uint8_t a = getReg(reg);          // Store original register value
 	uint8_t b = bus.bus_read(pair.full);
@@ -463,6 +464,7 @@ void Instruction::call_f(uint16_t address, CPU::Flag flag, bool ifNot) {
 		// Additional 12 cycles for actual call (total 24)
 		cpu.temp_t_cycles += 12;
 	}
+
 }
 void Instruction::push_rr(CPU::RegisterPair pair) {
 	bus.bus_write(--cpu.SP, pair.hi);  // Push high byte first (e.g., B for BC)
