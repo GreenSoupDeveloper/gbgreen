@@ -67,14 +67,16 @@ void Instruction::inc_r(Register8 reg) {
 }
 void Instruction::dec_r(Register8 reg) {
 	uint8_t& r = getReg(reg);
+	uint8_t old = r;
 	uint8_t result = r - 1;
 
 	setFlag(cpu.FLAG_Z, result == 0);
 	setFlag(cpu.FLAG_N, true);
-	setFlag(cpu.FLAG_H, (r & 0x0F) == 0x00); // Borrow from bit 4?
+	setFlag(cpu.FLAG_H, (old & 0x0F) == 0x00); // More accurate check
 
 	r = result;
 }
+
 void Instruction::ld_r_n(Register8 reg, uint8_t value) {
 	getReg(reg) = value;
 	//printf("hi %d", getReg(reg));

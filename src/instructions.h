@@ -8,6 +8,7 @@
 class Instruction {
 
 public:
+	// used to simplify the opcode cycles stuff. if a value is 0, it means that that opcode has multiple cycle values.
 	const uint8_t instructionTicks[256] = {
 	   4,  12, 8, 8,  4,  4,  8,  4,  20, 8,  8,  8, 4, 4,  8, 4,   // 0x0_
 	   4,  12, 8, 8,  4,  4,  8,  4,  12, 8,  8,  8, 4, 4,  8, 4,   // 0x1_
@@ -26,7 +27,7 @@ public:
 	   12, 12, 8, 0,  0,  16, 8,  16, 16, 4,  16, 0, 0, 0,  8, 16,  // 0xe_
 	   12, 12, 8, 4,  0,  16, 8,  16, 12, 8,  16, 4, 0, 0,  8, 16   // 0xf_
 	};
-
+	// helper thing to get 8bit regs without having to do for example: BC.hi
 	enum Register8 {
 		REG_A, REG_B, REG_C, REG_D, REG_E, REG_H, REG_L, REG_F
 	};
@@ -35,12 +36,12 @@ public:
 
 
 	Instruction();
-	void setFlag(CPU::Flag flag, bool value);
-	bool getFlag(CPU::Flag flag);
-	uint8_t& getReg(Register8 reg);
+	void setFlag(CPU::Flag flag, bool value); //helper to set flag
+	bool getFlag(CPU::Flag flag); // helper to get flag
+	uint8_t& getReg(Register8 reg); // helper to get 8bit reg
 
 
-
+	// opcodes
 	void ld_rr_d16(CPU::RegisterPair& reg);
 	void ld_addr_rr_a(CPU::RegisterPair& reg, int ifthing);
 	void inc_r(Register8 reg);

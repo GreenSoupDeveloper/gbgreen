@@ -29,6 +29,19 @@ uint8_t Bus::bus_read(uint16_t addr) {
 		return 0x90; // Hardcoded for testing
 	}
 
+
+/*	else if (addr == 0xFF02) {
+		if (io[0xFF02] == 0x81) {
+			char c = (char)bus.bus_read(0xFF01);
+			printf("DEBUG: %s", c);
+			io[0xFF02] = 0;
+			
+		}
+		printf("DEBUG: %d", io[0xFF02]);
+		
+		return 0xEE;
+	}*/
+
 	else if (addr >= 0x8000 && addr <= 0x9FFF) {
 		return vram[addr - 0x8000];
 	}
@@ -50,6 +63,9 @@ uint8_t Bus::bus_read(uint16_t addr) {
 		printf("[INFO] ROM is trying to read the forbidden area. Address: 0x%04X\n", addr);
 		return 0xFF;
 	}
+	else if (addr == 0xFF0F) {
+		return IF;
+	}
 	else if (addr >= 0xFF00 && addr <= 0xFF7F) {
 		return io[addr - 0xFF00];
 	}
@@ -59,9 +75,7 @@ uint8_t Bus::bus_read(uint16_t addr) {
 	else if (addr == 0xFFFF) {
 		return IE;
 	}
-	else if (addr == 0xFF0F) {
-		return IF;
-	}
+	
 
 	else {
 		printf("[ERROR] Unknown reading address (Opcode: 0x%02X | Address: 0x%04X).. is it you or is it me?\n", cpu.currOpcode, addr);
@@ -71,10 +85,12 @@ uint8_t Bus::bus_read(uint16_t addr) {
 
 
 void Bus::bus_write(uint16_t addr, uint8_t value) {
+	
 	if (addr <= 0x7FFF) {
 		//cart.rom_data[addr]; // ROM region
 		printf("[ERROR] You can't write to ROM dude. Opcode: 0x%02X | Address: 0x%04X | Value: 0x%02X (d%d)\n", cpu.currOpcode, addr, value, value);
 	}
+	
 	else if (addr >= 0x8000 && addr <= 0x9FFF) {
 		vram[addr - 0x8000] = value;
 	}
@@ -95,22 +111,26 @@ void Bus::bus_write(uint16_t addr, uint8_t value) {
 		// You can safely ignore or log it, just don’t crash
 		printf("[INFO] ROM is trying to write to the forbidden area. Address: 0x%04X\n", addr);
 	}
+	else if (addr == 0xFF0F) {
+		IF = value;
+	}
 	else if (addr >= 0xFF00 && addr <= 0xFF7F) {
 		io[addr - 0xFF00] = value;
-	}
-	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
-		hram[addr - 0xFF80] = value;
 	}
 	else if (addr == 0xFFFF) {
 		IE = value;
 	}
-	else if (addr == 0xFF0F) {
-		IF = value;
+	
+	
+	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
+		hram[addr - 0xFF80] = value;
 	}
 	
+
 	else {
 		printf("[ERROR] Unknown writing address (Opcode: 0x%02X | Address: 0x%04X | Value: 0x%02X (d%d)).. is it you or is it me?\n", cpu.currOpcode, addr, value, value);
 	}
+	
 
-    // hi
+	// hi
 }

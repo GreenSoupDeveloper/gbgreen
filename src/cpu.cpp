@@ -550,17 +550,3 @@ void CPU::Cycle() {
 	io.dbg_update();
 	io.dbg_print();
 }
-
-
-void CPU::d_PrintState() {
-	std::cout << "INFO: A: " << std::hex << (int)AF.hi
-		<< " B: " << (int)BC.hi
-		<< " C: " << (int)BC.lo
-		<< " D: " << (int)DE.hi
-		<< " E: " << (int)DE.lo
-		<< " F: " << (int)AF.lo
-		<< " H: " << (int)HL.hi
-		<< " L: " << (int)HL.lo
-		<< " SP: " << (int)SP
-		<< " PC: " << PC << "\n";
-}

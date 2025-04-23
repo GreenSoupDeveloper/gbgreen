@@ -7,6 +7,7 @@
 class Cartridge {
 
 public:
+	// cartridge header
 	uint8_t entry[4];
 	uint8_t logo[0x30];
 
@@ -22,12 +23,12 @@ public:
 	uint8_t checksum;
 	uint16_t global_checksum;
 
+	//cartridge data
 	char filename[1024];
-	uint16_t rom_data[0x10000];
+	uint16_t rom_data[0x10000]; // it should be 0x8000, but im putting 0x10000 just for now since i havent implemented MBC yet
 
-	bool LoadROM(std::string filename);
+	bool LoadROM(std::string filename); // load rom thingers
 	Cartridge();
 	~Cartridge();
-	std::string toHexString(const uint8_t* data, size_t length);
 };
 extern Cartridge cart;

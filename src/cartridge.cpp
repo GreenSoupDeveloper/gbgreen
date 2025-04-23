@@ -139,12 +139,3 @@ bool Cartridge::LoadROM(std::string filename) {
 	return false;
 
 }
-
-std::string Cartridge::toHexString(const uint8_t* data, size_t length) {
-	std::ostringstream oss;
-	for (size_t i = 0; i < length; ++i) {
-		oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(data[i]);
-		if (i < length - 1) oss << " ";
-	}
-	return oss.str();
-}
