@@ -26,7 +26,7 @@ uint8_t Bus::bus_read(uint16_t addr) {
 	}
 	//test area
 	else if (addr == 0xFF44) { // LY
-		return 0x90; // Hardcoded for testing
+		return 0x90; // hardcoded for testing
 	}
 
 
@@ -52,14 +52,13 @@ uint8_t Bus::bus_read(uint16_t addr) {
 		return wram[addr - 0xC000];
 	}
 	else if (addr >= 0xE000 && addr <= 0xFDFF) {
-		return wram[addr - 0xE000]; // Echo of 0xC000–0xDDFF
+		return wram[addr - 0xE000]; // echo of 0xC000–0xDDFF
 	}
 	else if (addr >= 0xFE00 && addr <= 0xFE9F) {
 		return oam[addr - 0xFE00];
 	}
 	else if (addr >= 0xFEA0 && addr <= 0xFEFF) {
-		// Technically unusable, but some games poke here
-		// You can safely ignore or log it, just don’t crash
+		// technically unusable, but some games poke here
 		printf("[INFO] ROM is trying to read the forbidden area. Address: 0x%04X\n", addr);
 		return 0xFF;
 	}
@@ -80,7 +79,7 @@ uint8_t Bus::bus_read(uint16_t addr) {
 	else {
 		printf("[ERROR] Unknown reading address (Opcode: 0x%02X | Address: 0x%04X).. is it you or is it me?\n", cpu.currOpcode, addr);
 	}
-	return 0xFF; // Unusable or unimplemented area
+	return 0xFF; // unusable or unimplemented area
 }
 
 
@@ -107,8 +106,7 @@ void Bus::bus_write(uint16_t addr, uint8_t value) {
 		oam[addr - 0xFE00] = value;
 	}
 	else if (addr >= 0xFEA0 && addr <= 0xFEFF) {
-		// Technically unusable, but some games poke here
-		// You can safely ignore or log it, just don’t crash
+		// technically unusable, but some games poke here
 		printf("[INFO] ROM is trying to write to the forbidden area. Address: 0x%04X\n", addr);
 	}
 	else if (addr == 0xFF0F) {
