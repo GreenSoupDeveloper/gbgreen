@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <cpu.h>
 #include <cartridge.h>
+#include <mbc.h>
 
 // 0x0000 - 0x3FFF : ROM Bank 0
 // 0x4000 - 0x7FFF : ROM Bank 1 - Switchable
@@ -21,26 +22,19 @@
 // 0xFF80 - 0xFFFE : Zero Page
 
 uint8_t Bus::bus_read(uint16_t addr) {
-	if (addr <= 0x7FFF) {
-		return cart.rom_data[addr]; // ROM region
+	if (addr <= 0x3FFF) {
+		// Fixed bank 0
+		return mbc.rom_bank0[addr];
+	}
+	else if (addr >= 0x4000 && addr <= 0x7FFF) {
+		// Switchable bank 1
+		return mbc.rom_bank1[addr - 0x4000];
 	}
 	//test area
 	else if (addr == 0xFF44) { // LY
 		return 0x90; // hardcoded for testing
 	}
 
-
-/*	else if (addr == 0xFF02) {
-		if (io[0xFF02] == 0x81) {
-			char c = (char)bus.bus_read(0xFF01);
-			printf("DEBUG: %s", c);
-			io[0xFF02] = 0;
-			
-		}
-		printf("DEBUG: %d", io[0xFF02]);
-		
-		return 0xEE;
-	}*/
 
 	else if (addr >= 0x8000 && addr <= 0x9FFF) {
 		return vram[addr - 0x8000];

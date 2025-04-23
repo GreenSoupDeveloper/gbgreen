@@ -14,6 +14,7 @@
 #include <instructions.h>
 #include <ext_instructions.h>
 #include <io.h>
+#include <mbc.h>
 
 CPU::~CPU() {}
 Cartridge::~Cartridge() {}
@@ -28,6 +29,7 @@ Bus bus;
 Instruction insts;
 ExtInstruction extInsts;
 IO io;
+MBC mbc;
 
 
 /* Called once at startup */

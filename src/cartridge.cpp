@@ -8,6 +8,7 @@
 #include <cpu.h>
 #include <sstream>
 #include <vector>
+#include <mbc.h>
 Cartridge::Cartridge() {
 
 }
@@ -81,6 +82,7 @@ bool Cartridge::LoadROM(std::string filename) {
 			size = 0x8000;
 		}
 		cart.type = buffer[0x147];
+		cart.rom_size = buffer[0x148];
 
 		std::cout << "[INFO] ROM Type: " << ROM_TYPES[cart.type] << "\n";
 
@@ -113,9 +115,16 @@ bool Cartridge::LoadROM(std::string filename) {
 
 
 			}
-			
+
 			rom_data[i] = buffer[i];
+			if (i <= 0x3FFF) {
+				mbc.rom_bank0[i] = buffer[i];
+			}
+			else if (i <= 0x7FFF) {
+				mbc.rom_bank1[i - 0x4000] = buffer[i];
+			}
 		}
+
 		uint16_t x = 0;
 		for (uint16_t i = 0x0134; i <= 0x014C; i++) {
 			x = x - rom_data[i] - 1;

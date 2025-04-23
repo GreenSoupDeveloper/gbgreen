@@ -25,7 +25,7 @@ public:
 
 	//cartridge data
 	char filename[1024];
-	uint16_t rom_data[0x10000]; // it should be 0x8000, but im putting 0x10000 just for now since i havent implemented MBC yet
+	uint8_t  rom_data[0x800000]; // 8MB bank. it should be 0x8000, but ill let MBC handle that. 
 
 	bool LoadROM(std::string filename); // load rom thingers
 	Cartridge();
