@@ -139,6 +139,10 @@ bool Cartridge::LoadROM(std::string filename) {
 
 		}
 		std::cout << "[INFO] ROM '" << titleting << "' Loaded!\n\n";
+		if (size == 256) {
+			std::cout << "INFO: GameBoy Bootroom loaded.\n\n";
+			cpu.PC = 0x00;
+		}
 
 
 		// clean the buffer

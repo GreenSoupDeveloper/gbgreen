@@ -63,7 +63,7 @@ public:
 
    
     
-
+    void initializeGameboy();
     void Push16(uint16_t value); // push 16-bytes to stack
     uint16_t Read16(uint16_t addr); // read 16-bit byte from memory
     bool InterruptCheck(uint16_t address, interrupt_type it); // to check interrupt things

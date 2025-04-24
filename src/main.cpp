@@ -15,6 +15,8 @@
 #include <ext_instructions.h>
 #include <io.h>
 #include <mbc.h>
+#include <timer.h>
+#include <ppu.h>
 
 CPU::~CPU() {}
 Cartridge::~Cartridge() {}
@@ -30,6 +32,9 @@ Instruction insts;
 ExtInstruction extInsts;
 IO io;
 MBC mbc;
+Timer timer;
+PPU ppu;
+
 
 
 /* Called once at startup */
@@ -89,11 +94,12 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 
 
-
-
+	cpu.initializeGameboy();
+	timer.timer_init();
 
 	return SDL_APP_CONTINUE;
 }
+
 void UpdatePixels() {
 	SDL_SetRenderDrawColor(emu.renderer, 0, 0, 0, 255);
 	SDL_RenderClear(emu.renderer);
@@ -134,6 +140,8 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 				stay = false;
 			else
 				stay = true;
+
+			//update_dbg_window();
 		}
 		if (event->key.key == SDLK_ESCAPE)
 		{
@@ -143,7 +151,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 				emu.paused = true;
 		}
 		if (emu.paused) {
-			
+
 			if (event->key.key == SDLK_UP)
 			{
 				emu.menuItemSelected -= 1;
@@ -269,21 +277,8 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 /* Called once at shutdown */
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
-	std::string thing;
-	int aaa = 0;
-	for (uint16_t i = 0xC000; i < 0xFDFF; i++) {
-		//if(bus.bus_read(i) != 0x00)
-		thing += bus.bus_read(i);
-		
-	}
-	std::ofstream configFile("wram_dump.txt");
 
-	
 
-	configFile << thing << std::endl;
-
-	configFile.close();
-	
 	if (emu.texture) SDL_DestroyTexture(emu.texture);
 	if (emu.renderer) SDL_DestroyRenderer(emu.renderer);
 	if (emu.window) SDL_DestroyWindow(emu.window);
@@ -293,7 +288,8 @@ void SDL_AppQuit(void* appstate, SDL_AppResult result)
 /* Called once per frame */
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
-	if (stay){
+
+	if (stay) {
 
 		if (emu.paused) {
 			if (emu.menuItemOpened == 0) {
@@ -333,15 +329,16 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 				emu.menuItemOpened = 0;
 			}
 		}
-	if (emu.romLoaded) {
-		cpu.Cycle();
-	}
-	//cpu.d_PrintState();
+		if (emu.romLoaded) {
+			cpu.Cycle();
+		}
+		
 
-	UpdatePixels();
-	SDL_Delay(1);
-	emu.ticks++;
-}
+		UpdatePixels();
+		//SDL_Delay(1);
+		emu.ticks++;
+		
+	}
 
 	return SDL_APP_CONTINUE;
 }

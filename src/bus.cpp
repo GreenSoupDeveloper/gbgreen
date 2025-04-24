@@ -6,6 +6,7 @@
 #include <cpu.h>
 #include <cartridge.h>
 #include <mbc.h>
+#include <timer.h>
 
 // 0x0000 - 0x3FFF : ROM Bank 0
 // 0x4000 - 0x7FFF : ROM Bank 1 - Switchable
@@ -56,6 +57,8 @@ uint8_t Bus::bus_read(uint16_t addr) {
 		printf("[INFO] ROM is trying to read the forbidden area. Address: 0x%04X\n", addr);
 		return 0xFF;
 	}
+	else if (addr == 0xFF04 || addr == 0xFF05 || addr == 0xFF06 || addr == 0xFF07)
+		return timer.timer_read(addr);
 	else if (addr == 0xFF0F) {
 		return IF;
 	}
@@ -103,6 +106,8 @@ void Bus::bus_write(uint16_t addr, uint8_t value) {
 		// technically unusable, but some games poke here
 		printf("[INFO] ROM is trying to write to the forbidden area. Address: 0x%04X\n", addr);
 	}
+	else if (addr == 0xFF04 || addr == 0xFF05 || addr == 0xFF06 || addr == 0xFF07)
+		return timer.timer_write(addr, value);
 	else if (addr == 0xFF0F) {
 		IF = value;
 	}

@@ -8,17 +8,80 @@
 #include <iomanip>
 #include <instructions.h>
 #include <io.h>
-
+#include <timer.h>
 #include <bitset>
+#include <mbc.h>
 CPU::CPU()
 {
 	//if its not bootrom
-	PC = 0x100; //is it 0x100 or 0x0ff?
-	BC.full = 0x0013;
-	DE.full = 0x00DE;
-	AF.full = 0x01B0; //0x01b0 default but eh
+	PC = 0x100;
 	SP = 0xFFFE;
+	AF.hi = 0xB001;
+	BC.hi = 0x1300;
+	DE.hi = 0xD800;
+	HL.hi = 0x4D01;
+	bus.IE = 0;
+	AF.lo = 0;
+	IME = false;
+
+
+	timer.DIV = 0xABCC;
+}
+void CPU::initializeGameboy() {
+	
+	mbc.currentBank = 1;
+
+	AF.full = 0x01B0;
+	BC.full = 0x0013;
+	DE.full = 0x00D8;
 	HL.full = 0x014D;
+	PC = 0x0100;
+	SP = 0xFFFE;
+
+	bus.bus_write(0xFF00, 0xCF); // P1
+	bus.bus_write(0xFF01, 0x00); // SB
+	bus.bus_write(0xFF02, 0x7E); // SC
+	bus.bus_write(0xFF04, 0x18); // DIV
+	bus.bus_write(0xFF05, 0x00); // TIMA
+	bus.bus_write(0xFF06, 0x00); // TMA
+	bus.bus_write(0xFF07, 0xF8); // TAC
+	bus.bus_write(0xFF0F, 0xE1); // IF
+	bus.bus_write(0xFF10, 0x80); // NR10
+	bus.bus_write(0xFF11, 0xBF); // NR11
+	bus.bus_write(0xFF12, 0xF3); // NR12
+	bus.bus_write(0xFF13, 0xFF); // NR13
+	bus.bus_write(0xFF14, 0xBF); // NR14
+	bus.bus_write(0xFF16, 0x3F); // NR21
+	bus.bus_write(0xFF17, 0x00); // NR22
+	bus.bus_write(0xFF18, 0xFF); // NR23
+	bus.bus_write(0xFF19, 0xBF); // NR24
+	bus.bus_write(0xFF1A, 0x7F); // NR30
+	bus.bus_write(0xFF1B, 0xFF); // NR31
+	bus.bus_write(0xFF1C, 0x9F); // NR32
+	bus.bus_write(0xFF1D, 0xFF); // NR33
+	bus.bus_write(0xFF1E, 0xBF); // NR34
+	bus.bus_write(0xFF20, 0xFF); // NR41
+	bus.bus_write(0xFF21, 0x00); // NR42
+	bus.bus_write(0xFF22, 0x00); // NR43
+	bus.bus_write(0xFF23, 0xBF); // NR44
+	bus.bus_write(0xFF24, 0x77); // NR50
+	bus.bus_write(0xFF25, 0xF3); // NR51
+	bus.bus_write(0xFF26, 0xF1); // NR52
+	bus.bus_write(0xFF40, 0x91); // LCDC
+	bus.bus_write(0xFF41, 0x81); // STAT
+	bus.bus_write(0xFF42, 0x00); // SCY
+	bus.bus_write(0xFF43, 0x00); // SCX
+	bus.bus_write(0xFF44, 0x91); // LY
+	bus.bus_write(0xFF45, 0x00); // LYC
+	bus.bus_write(0xFF46, 0xFF); // DMA
+	bus.bus_write(0xFF47, 0xFC); // BGP
+	bus.bus_write(0xFF4A, 0x00); // WY
+	bus.bus_write(0xFF4B, 0x00); // WX
+
+
+	bus.IE = 0x00;
+	
+	halted = false;
 }
 
 //helper stuff here..
@@ -129,7 +192,8 @@ void CPU::HandleInterrupt() {
 	printf("interrupt woked cpu up\n");
 }
 void CPU::RequestInterrupt(interrupt_type t) {
-
+	bus.IF |= t;
+	halted = false;
 }
 
 int imeAfterNextInsts = 0;
@@ -471,7 +535,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	default:
 
 		printf("[ERROR] Unknown opcode: 0x%02x at 0x%04x | ", opcode, tempPC);
-		//printf("DIV: %d\n", mmu->timer.div);
+		printf("DIV: %d\n", timer.DIV);
 		printf("Cycles: %d\n", t_cycles);
 		return;
 		break;
@@ -489,6 +553,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 void CPU::Cycle() {
 	if (!halted) {
+		
 
 		uint8_t opcode = bus.bus_read(PC);
 		currOpcode = opcode;
@@ -520,6 +585,7 @@ void CPU::Cycle() {
 
 		t_cycles += temp_t_cycles;
 		m_cycles += temp_t_cycles / 4;
+		//timer.timer_tick();
 	 
 		 
 	}
