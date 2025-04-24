@@ -123,12 +123,7 @@ bool Cartridge::LoadROM(std::string filename) {
 			}
 
 			rom_data[i] = buffer[i];
-			if (i <= 0x3FFF) {
-				mbc.rom_bank0[i] = buffer[i];
-			}
-			else if (i <= 0x7FFF) {
-				mbc.rom_bank1[i - 0x4000] = buffer[i];
-			}
+		
 		}
 
 		uint16_t x = 0;

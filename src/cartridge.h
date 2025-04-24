@@ -25,7 +25,7 @@ public:
 
 	//cartridge data
 	char filename[1024];
-	uint8_t  rom_data[0x800000]; // 8MB bank. it should be 0x8000, but ill let MBC handle that. 
+	uint8_t  rom_data[0x800000]; // Total Max. 8MB game memory. for the MBC to use later.
 
 	int rom_banks_count;
 	int ram_banks_count;
