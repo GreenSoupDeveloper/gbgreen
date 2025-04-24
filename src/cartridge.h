@@ -27,7 +27,14 @@ public:
 	char filename[1024];
 	uint8_t  rom_data[0x800000]; // 8MB bank. it should be 0x8000, but ill let MBC handle that. 
 
+	int rom_banks_count;
+	int ram_banks_count;
+
+	uint8_t* ram;
+
 	bool LoadROM(std::string filename); // load rom thingers
+	int get_ram_banks_count(uint8_t type);
+	void detect_mbc_type(uint8_t type);
 	Cartridge();
 	~Cartridge();
 };

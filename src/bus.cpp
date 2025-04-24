@@ -23,14 +23,8 @@
 // 0xFF80 - 0xFFFE : Zero Page
 
 uint8_t Bus::bus_read(uint16_t addr) {
-	if (addr <= 0x3FFF) {
-		// Fixed bank 0
-		return mbc.rom_bank0[addr];
-	}
-	else if (addr >= 0x4000 && addr <= 0x7FFF) {
-		// Switchable bank 1
-		return mbc.rom_bank1[addr - 0x4000];
-	}
+	if (addr < 0x8000 || (addr >= 0xA000 && addr < 0xC000))
+		return mbc.read_mbc1(addr);
 	//test area
 	else if (addr == 0xFF44) { // LY
 		return 0x90; // hardcoded for testing
@@ -71,7 +65,7 @@ uint8_t Bus::bus_read(uint16_t addr) {
 	else if (addr == 0xFFFF) {
 		return IE;
 	}
-	
+
 
 	else {
 		printf("[ERROR] Unknown reading address (Opcode: 0x%02X | Address: 0x%04X).. is it you or is it me?\n", cpu.currOpcode, addr);
@@ -81,12 +75,10 @@ uint8_t Bus::bus_read(uint16_t addr) {
 
 
 void Bus::bus_write(uint16_t addr, uint8_t value) {
+
 	
-	if (addr <= 0x7FFF) {
-		//cart.rom_data[addr]; // ROM region
-		printf("[ERROR] You can't write to ROM dude. Opcode: 0x%02X | Address: 0x%04X | Value: 0x%02X (d%d)\n", cpu.currOpcode, addr, value, value);
-	}
-	
+	if (addr < 0x8000 || (addr >= 0xA000 && addr < 0xC000))
+		mbc.write_mbc1(addr, value);
 	else if (addr >= 0x8000 && addr <= 0x9FFF) {
 		vram[addr - 0x8000] = value;
 	}
@@ -117,17 +109,17 @@ void Bus::bus_write(uint16_t addr, uint8_t value) {
 	else if (addr == 0xFFFF) {
 		IE = value;
 	}
-	
-	
+
+
 	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
 		hram[addr - 0xFF80] = value;
 	}
-	
+
 
 	else {
 		printf("[ERROR] Unknown writing address (Opcode: 0x%02X | Address: 0x%04X | Value: 0x%02X (d%d)).. is it you or is it me?\n", cpu.currOpcode, addr, value, value);
 	}
-	
+
 
 	// hi
 }

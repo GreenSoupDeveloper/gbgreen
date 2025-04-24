@@ -79,13 +79,15 @@ bool Cartridge::LoadROM(std::string filename) {
 		file.close();
 		if (size > 32768) {
 			std::cout << "[INFO] ROM size is higher than 32768 bytes (32KB)! ROM will continue executing if it has MBC.\n";
-			size = 0x8000;
+			//size = 0x8000;
 		}
 		cart.type = buffer[0x147];
 		cart.rom_size = buffer[0x148];
-
-		std::cout << "[INFO] ROM Type: " << ROM_TYPES[cart.type] << "\n";
-
+		detect_mbc_type(cart.type);
+		cart.rom_banks_count = size / 0x4000;
+		cart.ram_banks_count = get_ram_banks_count(buffer[0x149]);
+		std::cout << "[INFO] ROM Type: " << ROM_TYPES[cart.type] << " | ROM Banks: " << rom_banks_count << "\n";
+	
 
 
 		// load the rom into the gb's memory, since its going to rom_data and not main memory, it wont start at 0x0100 (256 bytes)
@@ -93,7 +95,11 @@ bool Cartridge::LoadROM(std::string filename) {
 		int titlecount = 0;
 		std::string titleting = "";
 		bool logomatches = true;
-		for (long i = 0; i < size; ++i)
+		int size_filter = size;
+		if (size_filter > 32768)
+			size_filter = 0x8000;
+		
+		for (long i = 0; i < size_filter; ++i)
 		{
 			if (i > 0x0103 && i < 0x0134) {
 				logo[logocount] = buffer[i];
@@ -151,4 +157,66 @@ bool Cartridge::LoadROM(std::string filename) {
 	}
 	return false;
 
+}
+void Cartridge::detect_mbc_type(uint8_t type) {
+	/*switch (type) {
+	case 0x00:
+	case 0x08:
+	case 0x09:
+		mbc = new MBC0(memory);
+		break;
+	case 0x01:
+	case 0x02:
+	case 0x03:
+		mbc = new MBC1(memory, ram, rom_banks_count, ram_banks_count);
+		break;
+	case 0x05:
+	case 0x06:
+		mbc = new MBC2(memory, ram, rom_banks_count, ram_banks_count);
+		break;
+	case 0x0F:
+	case 0x10:
+	case 0x11:
+	case 0x12:
+	case 0x13:
+		mbc = new MBC3(memory, ram, rom_banks_count, ram_banks_count);
+		break;
+	case 0x19:
+	case 0x1A:
+	case 0x1B:
+	case 0x1C:
+	case 0x1D:
+	case 0x1E:
+		mbc = new MBC5(memory, ram, rom_banks_count, ram_banks_count);
+		break;
+	default:
+		std::cout << "Unsupported MBC type: " << type << std::endl;
+		exit(1);
+	}*/
+}
+
+int Cartridge::get_ram_banks_count(uint8_t type) {
+	switch (type) {
+	case 0x00:
+		return 0;
+		break;
+	case 0x01:
+		return 0;
+		break;
+	case 0x02:
+		return 1;
+		break;
+	case 0x03:
+		return 4;
+		break;
+	case 0x04:
+		return 16;
+		break;
+	case 0x05:
+		return 8;
+		break;
+	default:
+		std::cout << "Incorrect RAM type: " << type << std::endl;
+		exit(1);
+	}
 }
