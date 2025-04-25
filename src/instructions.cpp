@@ -117,7 +117,7 @@ void Instruction::ld_a_addr_rr(CPU::RegisterPair& reg, int decOrInc) {
 
 	if (decOrInc == -1)
 		reg.full--;
-	else
+	else if (decOrInc == 1)
 		reg.full++;
 	
 }
@@ -385,7 +385,7 @@ void Instruction::cp_r_r(Register8 reg1, uint8_t reg2) {
 	uint8_t b = reg2;
 	
 	uint8_t result = a - b;
-	//printf("a: %02X | reg2: %02X | result: %d ", a, reg2, result);
+	printf("a: %02X | reg2: %02X | result: %d ", a, reg2, result);
 
 	// Set flags (don't modify registers)
 	setFlag(cpu.FLAG_Z, (result == 0));       // Zero flag

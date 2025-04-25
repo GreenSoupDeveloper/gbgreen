@@ -13,9 +13,9 @@ uint8_t MBC::read_mbc1(uint16_t addr) {
     else if (addr < 0x8000) {
         // switchable bank area
         uint32_t bank = currentBank;
-        if (bank == 0) bank = 1;
+        if (bank == 0) bank = 1;  // wrap just in case
         uint32_t offset = (bank * 0x4000) + (addr - 0x4000);
-        return cart.rom_data[offset]; // wrap just in case
+        return cart.rom_data[offset];
     }
     else if (addr >= 0xA000 && addr < 0xC000) {
         // ram bank (if enabled)
