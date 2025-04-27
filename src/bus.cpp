@@ -23,12 +23,14 @@
 // 0xFF80 - 0xFFFE : Zero Page
 
 uint8_t Bus::bus_read(uint16_t addr) {
-	if (addr < 0x8000 || (addr >= 0xA000 && addr < 0xC000))
-		return mbc.read_mbc1(addr);
+	if (addr < 0x8000)
+		//return mbc.read_mbc1(addr);
+		return cart.rom_data[addr];
 	//test area
 	else if (addr == 0xFF44) { // LY
 		return 0x90; // hardcoded for testing
 	}
+
 
 
 	else if (addr >= 0x8000 && addr <= 0x9FFF) {
@@ -56,12 +58,13 @@ uint8_t Bus::bus_read(uint16_t addr) {
 	else if (addr == 0xFF0F) {
 		return IF;
 	}
+	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
+		return hram[addr - 0xFF80]; // HRAM (unmapped, should persist)
+	}
 	else if (addr >= 0xFF00 && addr <= 0xFF7F) {
 		return io[addr - 0xFF00];
 	}
-	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
-		return hram[addr - 0xFF80];
-	}
+	
 	else if (addr == 0xFFFF) {
 		return IE;
 	}
@@ -98,8 +101,12 @@ void Bus::bus_write(uint16_t addr, uint8_t value) {
 		// technically unusable, but some games poke here
 		printf("[INFO] ROM is trying to write to the forbidden area. Address: 0x%04X\n", addr);
 	}
+
 	else if (addr == 0xFF04 || addr == 0xFF05 || addr == 0xFF06 || addr == 0xFF07)
 		return timer.timer_write(addr, value);
+	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
+		hram[addr - 0xFF80] = value;
+	}
 	else if (addr == 0xFF0F) {
 		IF = value;
 	}
@@ -111,9 +118,7 @@ void Bus::bus_write(uint16_t addr, uint8_t value) {
 	}
 
 
-	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
-		hram[addr - 0xFF80] = value;
-	}
+
 
 
 	else {

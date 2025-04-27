@@ -10,10 +10,10 @@ public:
     uint16_t div_counter = 0;   // Internal counter for DIV
     uint16_t tima_counter = 0;  // Internal counter for TIMA
 
-    uint8_t DIV = 0xAC00;
+    uint8_t DIV = 0;
     uint8_t TIMA = 0;
     uint8_t TMA = 0;
-    uint8_t TAC = 0;
+    uint8_t TAC = 0xF8;
 
     void timer_init();
     void timer_tick();

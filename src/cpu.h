@@ -59,6 +59,7 @@ public:
     } interrupt_type; // interrupt types
 
     interrupt_type interrupts;
+    std::string logdata = "";
 
 
    
@@ -69,7 +70,8 @@ public:
     bool InterruptCheck(uint16_t address, interrupt_type it); // to check interrupt things
     void HandleInterrupt(); // handle interrupts
     void RequestInterrupt(interrupt_type t); // request interrupts
-
+    std::string byteToHexString(uint8_t value);
+    std::string wordToHexString(uint16_t value);
 
     void ExecuteInstruction(uint8_t opcode); // execute cpu opcodes
     

@@ -14,15 +14,18 @@
 CPU::CPU()
 {
 	//if its not bootrom
-	PC = 0x100;
+	AF.hi = 0x01;
+	AF.lo = 0xB0;
+	BC.hi = 0x00;
+	BC.lo = 0x13;
+	DE.hi = 0x00;
+	DE.lo = 0xD8;
+	HL.hi = 0x01;
+	HL.lo = 0x4D;
 	SP = 0xFFFE;
-	AF.hi = 0xB001;
-	BC.hi = 0x1300;
-	DE.hi = 0xD800;
-	HL.hi = 0x4D01;
-	bus.IE = 0;
-	AF.lo = 0;
+	PC = 0x0100;
 	IME = false;
+	bus.hram[0xFF83] = 0x0B;
 
 
 	timer.DIV = 0xABCC;
@@ -77,6 +80,7 @@ void CPU::initializeGameboy() {
 	bus.bus_write(0xFF47, 0xFC); // BGP
 	bus.bus_write(0xFF4A, 0x00); // WY
 	bus.bus_write(0xFF4B, 0x00); // WX
+	bus.bus_write(0xFF83, 0x0B);
 
 
 	bus.IE = 0x00;
@@ -540,14 +544,29 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 		return;
 		break;
 	}
+	
 	char flags[5] = { 0 }; // ZNHC + null terminator
 	flags[0] = (tempF & (1 << 7)) ? 'Z' : '-';  // Bit 7
 	flags[1] = (tempF & (1 << 6)) ? 'N' : '-';  // Bit 6
 	flags[2] = (tempF & (1 << 5)) ? 'H' : '-';  // Bit 5
 	flags[3] = (tempF & (1 << 4)) ? 'C' : '-';  // Bit 4
 	flags[4] = '\0';
-	
-	printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) %s BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), flags, tempBC, tempDE, tempHL, tempSP, tempIF, tempIE );
+	logdata += "A:" + byteToHexString(tempA) + " ";
+	logdata += "F:" + byteToHexString(tempF) + " ";
+	logdata += "B:" + byteToHexString(tempBC >> 8) + " ";
+	logdata += "C:" + byteToHexString(tempBC & 0xFF) + " ";
+	logdata += "D:" + byteToHexString(tempDE >> 8) + " ";
+	logdata += "E:" + byteToHexString(tempDE & 0xFF) + " ";
+	logdata += "H:" + byteToHexString(tempHL >> 8) + " ";
+	logdata += "L:" + byteToHexString(tempHL & 0xFF) +" ";
+	logdata += "SP:" + wordToHexString(tempSP) + " ";
+	logdata += "PC:" + wordToHexString(tempPC) + " ";
+	logdata += "PCMEM:" + byteToHexString(bus.bus_read(tempPC)) + ",";
+	logdata += byteToHexString(bus.bus_read(tempPC + 1)) + ",";
+	logdata += byteToHexString(bus.bus_read(tempPC + 2)) + ",";
+	logdata += byteToHexString(bus.bus_read(tempPC + 3)) + "\n";
+
+	printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) %s BC: %04X DE: %04X HL: %04X (%02X) SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), flags, tempBC, tempDE, tempHL, bus.bus_read(tempHL), tempSP, tempIF, tempIE);
 
 }
 
@@ -615,4 +634,15 @@ void CPU::Cycle() {
 	ticks += 1;
 	io.dbg_update();
 	io.dbg_print();
+}
+std::string CPU::byteToHexString(uint8_t value) {
+	char buffer[3];
+	snprintf(buffer, sizeof(buffer), "%02X", value);
+	return buffer;
+}
+
+std::string CPU::wordToHexString(uint16_t value) {
+	char buffer[5];
+	snprintf(buffer, sizeof(buffer), "%04X", value);
+	return buffer;
 }

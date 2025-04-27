@@ -57,7 +57,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 	emu.texture = SDL_CreateTexture(emu.renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, emu.gbResX, emu.gbResY);
 	SDL_SetTextureScaleMode(emu.texture, SDL_SCALEMODE_NEAREST);
-
+	cpu.initializeGameboy();
 
 	if (!emu.texture) {
 		SDL_Log("Failed to create texture: %s", SDL_GetError());
@@ -83,7 +83,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 		if (!cart.LoadROM(argv[1])) //loading ROM provided as argument
 		{
-			std::cerr << "ROM could not be loaded. Possibly invalid path given\n";
+			std::cerr << "ROM could not be loaded. Possibly invalid path given.\n";
 			emu.romLoaded = false;
 		}
 		else {
@@ -94,7 +94,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 
 
-	cpu.initializeGameboy();
+	
 	timer.timer_init();
 
 	return SDL_APP_CONTINUE;
@@ -142,6 +142,16 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 				stay = true;
 
 			//update_dbg_window();
+		}
+		if (event->key.key == SDLK_L) {
+		
+			std::ofstream configFile("cpulogs.txt");
+
+
+
+			configFile << cpu.logdata << std::endl;
+
+			configFile.close();
 		}
 		if (event->key.key == SDLK_ESCAPE)
 		{
