@@ -435,7 +435,6 @@ void Instruction::pop_rr(CPU::RegisterPair& pair) {
 void Instruction::jp_f(CPU::Flag flag, bool ifNot) {
 	bool conditionMet = getFlag(flag);
 	uint8_t low = bus.bus_read(cpu.PC); uint8_t high = bus.bus_read(cpu.PC + 1); uint16_t addr = (high << 8) | low;
-	printf("adr: %04X", addr);
 
 	if (ifNot) conditionMet = !conditionMet;
 

@@ -277,7 +277,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 
 
-	case 0x20: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC)), FLAG_Z, true); break; // JR NZ, *
+	case 0x20: insts.jr_f(bus.bus_read(PC), FLAG_Z, true); break; // JR NZ, *
 	case 0x21: insts.ld_rr_d16(HL); break; // LD HL, nn
 	case 0x22: insts.ld_addr_rr_a(HL, 1); break; // LD (HL+), A
 	case 0x23: HL.full++; break; // INC HL
@@ -285,7 +285,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x25: insts.dec_r(insts.REG_H); break;// DEC H
 	case 0x26: insts.ld_r_n(insts.REG_H, bus.bus_read(PC++)); break; // LD H, n
 	case 0x27: insts.daa(); break; // DAA
-	case 0x28: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC)), FLAG_Z, false); break; // JR Z, *
+	case 0x28: insts.jr_f(bus.bus_read(PC), FLAG_Z, false); break; // JR Z, *
 	case 0x29: insts.add_hl_rr(HL.full); break; // ADD HL, HL
 	case 0x2A: insts.ld_a_addr_rr(HL, 1); break; // LD A, (HL+)
 	case 0x2B: HL.full--; break; // DEC HL
@@ -492,7 +492,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xD3: insts.jp_a16(); break; //JP a16
 	case 0xD4: low = bus.bus_read(PC++); high = bus.bus_read(PC++); addr = (high << 8) | low; insts.call_f(addr, FLAG_C, true); break; // CALL NC, a16
 	case 0xD5: insts.push_rr(DE); break; // PUSH DE
-	case 0xD6: insts.sub_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break; // ADD A, a8
+	case 0xD6: insts.sub_r_r(insts.REG_A, bus.bus_read(PC++)); break; // ADD A, a8
 	case 0xD7: insts.rst_addr(0x10); break;
 	case 0xD8: insts.ret(FLAG_C, false); break; // RET C
 	case 0xD9: insts.o_ret(); cpu.IME = true; break; // RETI
@@ -500,7 +500,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xDB: /*nothing*/ break; // nothing
 	case 0xDC: low = bus.bus_read(PC++); high = bus.bus_read(PC++); addr = (high << 8) | low; insts.call_f(addr, FLAG_C, false); break; // CALL C, a16
 	case 0xDD: /*nothing*/ break; // nothing
-	case 0xDE: insts.sbc_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
+	case 0xDE: insts.sbc_r_r(insts.REG_A, bus.bus_read(PC++)); break;
 	case 0xDF: insts.rst_addr(0x18); break;
 
 
