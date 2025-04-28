@@ -33,6 +33,7 @@ public:
     int ticks; // emulator ticks
 
     uint8_t currOpcode = 0x00; // current opcode
+    int currline = 1;
 
 
 
@@ -42,6 +43,7 @@ public:
     bool IME = false; // interrupt master enable
     bool halted = false; // halt
     bool haltBug = false; // halt bug (this is not necessary, its just for some accuracy)
+    uint8_t tempff = 0xFF;
     
 
     const uint8_t nintendoLogo[0x30] = {

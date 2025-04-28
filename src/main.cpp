@@ -96,6 +96,7 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 	
 	timer.timer_init();
+	
 
 	return SDL_APP_CONTINUE;
 }

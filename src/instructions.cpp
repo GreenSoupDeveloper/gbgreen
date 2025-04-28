@@ -53,7 +53,7 @@ void Instruction::ld_addr_rr_a(CPU::RegisterPair& reg, int ifthing) {
 	else if (ifthing == 1) {
 		reg.full++;
 	}
-	
+
 }
 void Instruction::inc_r(Register8 reg) {
 	uint8_t& r = getReg(reg);
@@ -119,7 +119,7 @@ void Instruction::ld_a_addr_rr(CPU::RegisterPair& reg, int decOrInc) {
 		reg.full--;
 	else if (decOrInc == 1)
 		reg.full++;
-	
+
 }
 void Instruction::rrc(Register8 reg) {
 	uint8_t& r = getReg(reg);
@@ -214,39 +214,41 @@ void Instruction::ld_r_r(Register8 dest, Register8 src) {
 }
 void Instruction::ld_r_rr(Register8 reg, CPU::RegisterPair pair) {
 	getReg(reg) = bus.bus_read(pair.full);
+	if (pair.full == 0xFF83)
+		printf("ff83: %02X\n", bus.bus_read(pair.full));
 }
 void Instruction::ld_rr_r(CPU::RegisterPair pair, Register8 reg) {
-	bus.bus_write(pair.full, reg);  // Store the value in B into memory at address HL
+	bus.bus_write(pair.full, getReg(reg));  // Store the value in B into memory at address HL
 }
 void Instruction::add_r_r(Register8 reg1, uint8_t reg2) {
-    uint8_t reg1_val = getReg(reg1);  // Store original values before modification
-    uint8_t reg2_val = reg2;
-    uint16_t result = reg1_val + reg2_val;
+	uint8_t reg1_val = getReg(reg1);  // Store original values before modification
+	uint8_t reg2_val = reg2;
+	uint16_t result = reg1_val + reg2_val;
 
-    getReg(reg1) = static_cast<uint8_t>(result);  // Store 8-bit result
+	getReg(reg1) = static_cast<uint8_t>(result);  // Store 8-bit result
 
-    // Set flags
-    setFlag(cpu.FLAG_Z, (getReg(reg1) == 0));
-    setFlag(cpu.FLAG_N, false);
-    // FIXED: Use original values for half-carry check
-    setFlag(cpu.FLAG_H, ((reg1_val & 0x0F) + (reg2_val & 0x0F) > 0x0F));
-    setFlag(cpu.FLAG_C, (result > 0xFF));
+	// Set flags
+	setFlag(cpu.FLAG_Z, (getReg(reg1) == 0));
+	setFlag(cpu.FLAG_N, false);
+	// FIXED: Use original values for half-carry check
+	setFlag(cpu.FLAG_H, ((reg1_val & 0x0F) + (reg2_val & 0x0F) > 0x0F));
+	setFlag(cpu.FLAG_C, (result > 0xFF));
 }
 void Instruction::add_r_rr(Register8 reg, CPU::RegisterPair pair) {
-    uint8_t regValue = getReg(reg);          // Get register value first
-    uint8_t memValue = bus.bus_read(pair.full); // Read from memory address in pair
-    uint16_t result = regValue + memValue;   // Calculate result with potential overflow
+	uint8_t regValue = getReg(reg);          // Get register value first
+	uint8_t memValue = bus.bus_read(pair.full); // Read from memory address in pair
+	uint16_t result = regValue + memValue;   // Calculate result with potential overflow
 
-    // Update register with 8-bit result
-    getReg(reg) = static_cast<uint8_t>(result);
+	// Update register with 8-bit result
+	getReg(reg) = static_cast<uint8_t>(result);
 
-    // Set flags
-    setFlag(cpu.FLAG_Z, (getReg(reg) == 0)); // Zero flag (check 8-bit result)
-    setFlag(cpu.FLAG_N, false);               // Subtract flag cleared
-    // Half-carry: check bit 3 carry
-    setFlag(cpu.FLAG_H, ((regValue & 0xF) + (memValue & 0xF)) > 0xF);
-    // Full carry: check bit 7 carry
-    setFlag(cpu.FLAG_C, (result > 0xFF));
+	// Set flags
+	setFlag(cpu.FLAG_Z, (getReg(reg) == 0)); // Zero flag (check 8-bit result)
+	setFlag(cpu.FLAG_N, false);               // Subtract flag cleared
+	// Half-carry: check bit 3 carry
+	setFlag(cpu.FLAG_H, ((regValue & 0xF) + (memValue & 0xF)) > 0xF);
+	// Full carry: check bit 7 carry
+	setFlag(cpu.FLAG_C, (result > 0xFF));
 }
 void Instruction::adc_r_r(Register8 reg1, uint8_t reg2) {
 	uint8_t reg1_val = getReg(reg1);  // Store original values
@@ -383,9 +385,9 @@ void Instruction::or_r_rr(Register8 reg, CPU::RegisterPair pair) {
 void Instruction::cp_r_r(Register8 reg1, uint8_t reg2) {
 	uint8_t a = getReg(reg1);  // Value in A
 	uint8_t b = reg2;
-	
+
 	uint8_t result = a - b;
-	printf("a: %02X | reg2: %02X | result: %d ", a, reg2, result);
+	
 
 	// Set flags (don't modify registers)
 	setFlag(cpu.FLAG_Z, (result == 0));       // Zero flag
@@ -430,17 +432,22 @@ void Instruction::pop_rr(CPU::RegisterPair& pair) {
 	pair.lo = bus.bus_read(cpu.SP++);   // Load the lower byte from the stack into C
 	pair.hi = bus.bus_read(cpu.SP++);   // Load the higher byte from the stack into B
 }
-void Instruction::jp_f(uint16_t address, CPU::Flag flag, bool ifNot) {
+void Instruction::jp_f(CPU::Flag flag, bool ifNot) {
 	bool conditionMet = getFlag(flag);
+	uint8_t low = bus.bus_read(cpu.PC); uint8_t high = bus.bus_read(cpu.PC + 1); uint16_t addr = (high << 8) | low;
+	printf("adr: %04X", addr);
+
 	if (ifNot) conditionMet = !conditionMet;
 
 	if (conditionMet) {
-		cpu.PC = address;  // Absolute jump
+		cpu.PC = addr;  // Absolute jump
 		cpu.temp_t_cycles += 16;  // Total cycles for taken jump
 	}
 	else {
 		cpu.temp_t_cycles += 12;  // Cycles for not taken
+		cpu.PC += 2;
 	}
+	
 }
 void Instruction::jp_a16() {
 	uint8_t low = bus.bus_read(cpu.PC++);
@@ -475,17 +482,17 @@ void Instruction::push_rr(CPU::RegisterPair pair) {
 
 }
 void Instruction::rst_addr(uint16_t address) {
-    // 1. Store return address (current PC points to NEXT instruction)
-    uint16_t return_addr = cpu.PC;
-    
-    // 2. Push return address (big-endian: high byte first)
-    cpu.SP--;
-    bus.bus_write(cpu.SP, (return_addr >> 8) & 0xFF);  // High byte
-    cpu.SP--;
-    bus.bus_write(cpu.SP, return_addr & 0xFF);         // Low byte
-    
-    // 3. Jump to fixed address
-    cpu.PC = address;
+	// 1. Store return address (current PC points to NEXT instruction)
+	uint16_t return_addr = cpu.PC;
+
+	// 2. Push return address (big-endian: high byte first)
+	cpu.SP--;
+	bus.bus_write(cpu.SP, (return_addr >> 8) & 0xFF);  // High byte
+	cpu.SP--;
+	bus.bus_write(cpu.SP, return_addr & 0xFF);         // Low byte
+
+	// 3. Jump to fixed address
+	cpu.PC = address;
 }
 void Instruction::o_ret() {
 	// Read the return address from the stack (little-endian)
@@ -503,37 +510,37 @@ void Instruction::cb_prefix() {
 	extInsts.ExecuteExtInstruction(opcode);
 }
 void Instruction::call_a16() {
-    // Fetch address (little-endian)
-    uint16_t addr = bus.bus_read(cpu.PC++);
-    addr |= bus.bus_read(cpu.PC++) << 8;
-    
-    // Store return address (current PC points to next instruction)
-    uint16_t return_addr = cpu.PC;
-    
-    // Push high byte first (big-endian stack)
-    bus.bus_write(--cpu.SP, (return_addr >> 8) & 0xFF);
-    bus.bus_write(--cpu.SP, return_addr & 0xFF);
+	// Fetch address (little-endian)
+	uint16_t addr = bus.bus_read(cpu.PC++);
+	addr |= bus.bus_read(cpu.PC++) << 8;
+
+	// Store return address (current PC points to next instruction)
+	uint16_t return_addr = cpu.PC;
+
+	// Push high byte first (big-endian stack)
+	bus.bus_write(--cpu.SP, (return_addr >> 8) & 0xFF);
+	bus.bus_write(--cpu.SP, return_addr & 0xFF);
 	//printf("address call a16: 0x%04x | ", addr);
-    
-    // Jump to new address
-    cpu.PC = addr;
-	
-	
+
+	// Jump to new address
+	cpu.PC = addr;
+
+
 }
 void Instruction::add_sp_r8(int8_t r8) {
-    uint16_t sp = cpu.SP;
-    uint16_t result = sp + r8;
+	uint16_t sp = cpu.SP;
+	uint16_t result = sp + r8;
 
-    // Flags are cleared (Z and N always 0)
-    setFlag(cpu.FLAG_Z, false);
-    setFlag(cpu.FLAG_N, false);
+	// Flags are cleared (Z and N always 0)
+	setFlag(cpu.FLAG_Z, false);
+	setFlag(cpu.FLAG_N, false);
 
-    // Correct carry/half-carry calculations (16-bit!)
-    setFlag(cpu.FLAG_H, ((sp & 0x0F) + (r8 & 0x0F)) > 0x0F);
-    setFlag(cpu.FLAG_C, ((sp & 0xFF) + (r8 & 0xFF)) > 0xFF);
+	// Correct carry/half-carry calculations (16-bit!)
+	setFlag(cpu.FLAG_H, ((sp & 0x0F) + (r8 & 0x0F)) > 0x0F);
+	setFlag(cpu.FLAG_C, ((sp & 0xFF) + (r8 & 0xFF)) > 0xFF);
 
-    cpu.SP = result;
-    cpu.temp_t_cycles += 16;  // 16 cycles total
+	cpu.SP = result;
+	cpu.temp_t_cycles += 16;  // 16 cycles total
 }
 void Instruction::ld_a16_a() {
 	// Read 16-bit address (little-endian)
@@ -546,20 +553,20 @@ void Instruction::ld_a16_a() {
 
 }
 void Instruction::ld_hl_sp_r8() {
-	   // 1. Read signed offset (1 byte)
-    int8_t offset = static_cast<int8_t>(bus.bus_read(cpu.PC++));
-    
-    // 2. Calculate 16-bit result (SP + offset)
-    uint32_t result = cpu.SP + offset;
-    
-    // 3. Store in HL (16-bit)
-    cpu.HL.full = static_cast<uint16_t>(result);
-    
-    // 4. Set flags
-    setFlag(cpu.FLAG_Z, false);  // Always 0
-    setFlag(cpu.FLAG_N, false);  // Always 0
-    setFlag(cpu.FLAG_H, ((cpu.SP ^ offset ^ (result & 0xFFFF)) & 0x10) != 0);
-    setFlag(cpu.FLAG_C, (result & 0x10000) != 0);
+	// 1. Read signed offset (1 byte)
+	int8_t offset = static_cast<int8_t>(bus.bus_read(cpu.PC++));
+
+	// 2. Calculate 16-bit result (SP + offset)
+	uint32_t result = cpu.SP + offset;
+
+	// 3. Store in HL (16-bit)
+	cpu.HL.full = static_cast<uint16_t>(result);
+
+	// 4. Set flags
+	setFlag(cpu.FLAG_Z, false);  // Always 0
+	setFlag(cpu.FLAG_N, false);  // Always 0
+	setFlag(cpu.FLAG_H, ((cpu.SP ^ offset ^ (result & 0xFFFF)) & 0x10) != 0);
+	setFlag(cpu.FLAG_C, (result & 0x10000) != 0);
 }
 void Instruction::ld_a_a16() {
 	// Read 16-bit address (little-endian)

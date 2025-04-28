@@ -79,7 +79,7 @@ public:
 	void cp_r_rr(Register8 reg, CPU::RegisterPair pair);
 	void ret(CPU::Flag flag, bool ifNot);
 	void pop_rr(CPU::RegisterPair& pair);
-	void jp_f(uint16_t address, CPU::Flag flag, bool ifNot);
+	void jp_f(CPU::Flag flag, bool ifNot);
 	void jp_a16();
 	void call_f(uint16_t address, CPU::Flag flag, bool ifNot);
 	void push_rr(CPU::RegisterPair pair);

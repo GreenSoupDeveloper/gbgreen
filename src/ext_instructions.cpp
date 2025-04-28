@@ -322,13 +322,13 @@ void ExtInstruction::ExecuteExtInstruction(uint8_t opcode) {
 
 	default:
 
-		printf("[ERROR] Unknown EXTENDED opcode: 0x%02x at 0x%04x | ", opcode, cpu.PC);
+		printf("[ERROR] Unknown EXTENDED opcode: 0x%02X at PC: 0x%04X | ", opcode, cpu.PC);
 		//printf("DIV: %d\n", mmu->timer.div);
 		printf("Cycles: %d\n", cpu.t_cycles);
 		return;
 		break;
 	}
-	printf("[INFO] EXTENDED Opcode 0x%02x at 0x%04x executed\n", opcode, cpu.PC);
+	printf("[INFO] EXTENDED Opcode 0x%02X at PC: 0x%04X executed\n", opcode, cpu.PC);
 }
 
 

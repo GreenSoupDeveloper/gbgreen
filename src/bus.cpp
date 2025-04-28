@@ -58,7 +58,7 @@ uint8_t Bus::bus_read(uint16_t addr) {
 	else if (addr == 0xFF0F) {
 		return IF;
 	}
-	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
+	else if (addr >= 0xFF80 && addr <= 0xFFFE) { // zero page
 		return hram[addr - 0xFF80]; // HRAM (unmapped, should persist)
 	}
 	else if (addr >= 0xFF00 && addr <= 0xFF7F) {

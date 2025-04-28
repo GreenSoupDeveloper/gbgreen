@@ -34,12 +34,18 @@ void CPU::initializeGameboy() {
 	
 	mbc.currentBank = 1;
 
-	AF.full = 0x01B0;
-	BC.full = 0x0013;
-	DE.full = 0x00D8;
-	HL.full = 0x014D;
-	PC = 0x0100;
+	AF.hi = 0x01;
+	AF.lo = 0xB0;
+	BC.hi = 0x00;
+	BC.lo = 0x13;
+	DE.hi = 0x00;
+	DE.lo = 0xD8;
+	HL.hi = 0x01;
+	HL.lo = 0x4D;
 	SP = 0xFFFE;
+	PC = 0x0100;
+	IME = false;
+	bus.hram[0xFF83] = 0x0B;
 
 	bus.bus_write(0xFF00, 0xCF); // P1
 	bus.bus_write(0xFF01, 0x00); // SB
@@ -463,7 +469,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 	case 0xC0: insts.ret(FLAG_Z, true); break; // RET NZ
 	case 0xC1: insts.pop_rr(BC); break; // POP BC
-	case 0xC2: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, true); break; // JP NZ, a16
+	case 0xC2: insts.jp_f(FLAG_Z, true); break; // JP NZ, a16
 	case 0xC3: insts.jp_a16(); break; //JP a16
 	case 0xC4: low = bus.bus_read(PC++); high = bus.bus_read(PC++); addr = (high << 8) | low; insts.call_f(addr, FLAG_Z, true); break; // CALL NZ, a16
 	case 0xC5: insts.push_rr(BC); break; // PUSH BC
@@ -471,7 +477,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xC7: insts.rst_addr(0x00); break;
 	case 0xC8: insts.ret(FLAG_Z, false); break; // RET Z
 	case 0xC9: insts.o_ret(); break; // RET
-	case 0xCA: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_Z, false); break; // JP Z, a16
+	case 0xCA: insts.jp_f(FLAG_Z, false); break; // JP Z, a16
 	case 0xCB: insts.cb_prefix(); break; // CB PREFIX
 	case 0xCC: low = bus.bus_read(PC++); high = bus.bus_read(PC++); addr = (high << 8) | low; insts.call_f(addr, FLAG_Z, false); break; // CALL Z, a16
 	case 0xCD: insts.call_a16(); break; // CALL a16
@@ -482,7 +488,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 	case 0xD0: insts.ret(FLAG_C, true); break; // RET NC
 	case 0xD1: insts.pop_rr(DE); break; // POP DE
-	case 0xD2: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, true); break; // JP NC, a16
+	case 0xD2: insts.jp_f(FLAG_C, true); break; // JP NC, a16
 	case 0xD3: insts.jp_a16(); break; //JP a16
 	case 0xD4: low = bus.bus_read(PC++); high = bus.bus_read(PC++); addr = (high << 8) | low; insts.call_f(addr, FLAG_C, true); break; // CALL NC, a16
 	case 0xD5: insts.push_rr(DE); break; // PUSH DE
@@ -490,7 +496,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xD7: insts.rst_addr(0x10); break;
 	case 0xD8: insts.ret(FLAG_C, false); break; // RET C
 	case 0xD9: insts.o_ret(); cpu.IME = true; break; // RETI
-	case 0xDA: insts.jp_f(static_cast<int8_t>(bus.bus_read(PC + 1)), FLAG_C, false); break; // JP C, a16
+	case 0xDA: insts.jp_f(FLAG_C, false); break; // JP C, a16
 	case 0xDB: /*nothing*/ break; // nothing
 	case 0xDC: low = bus.bus_read(PC++); high = bus.bus_read(PC++); addr = (high << 8) | low; insts.call_f(addr, FLAG_C, false); break; // CALL C, a16
 	case 0xDD: /*nothing*/ break; // nothing
@@ -551,6 +557,12 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	flags[2] = (tempF & (1 << 5)) ? 'H' : '-';  // Bit 5
 	flags[3] = (tempF & (1 << 4)) ? 'C' : '-';  // Bit 4
 	flags[4] = '\0';
+	
+	/*if (bus.bus_read(0xFF83) != tempff) {
+		logdata += "ff83: " + byteToHexString(bus.bus_read(0xFF83)) + " PC: " + wordToHexString(tempPC) + " curline: " + std::to_string(currline) + "\n";
+		tempff = bus.bus_read(0xFF83);
+	}
+	currline++;*/
 	logdata += "A:" + byteToHexString(tempA) + " ";
 	logdata += "F:" + byteToHexString(tempF) + " ";
 	logdata += "B:" + byteToHexString(tempBC >> 8) + " ";
@@ -566,8 +578,8 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	logdata += byteToHexString(bus.bus_read(tempPC + 2)) + ",";
 	logdata += byteToHexString(bus.bus_read(tempPC + 3)) + "\n";
 
-	printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) %s BC: %04X DE: %04X HL: %04X (%02X) SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), flags, tempBC, tempDE, tempHL, bus.bus_read(tempHL), tempSP, tempIF, tempIE);
-
+	printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) %s BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), flags, tempBC, tempDE, tempHL, tempSP, tempIF, tempIE);
+	
 }
 
 void CPU::Cycle() {
