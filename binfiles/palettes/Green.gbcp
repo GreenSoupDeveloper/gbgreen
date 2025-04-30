@@ -1,0 +1,5 @@
+FF8CDEC6
+FF63A584
+FF396139
+FF081810
+// for some reason the distribution is BGR instead or RGB, so its AABBGGRR instead of AARRGGBB

@@ -154,6 +154,23 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 
 			configFile.close();
 		}
+		if (event->key.key == SDLK_I) {
+
+			std::string thing;
+			int aaa = 0;
+			for (uint16_t i = 0x8000; i < 0x9FFF; i++) {
+				//if(bus.bus_read(i) != 0x00)
+				thing += bus.bus_read(i);
+
+			}
+			std::ofstream configFile("vram_dump.txt");
+
+
+
+			configFile << thing << std::endl;
+
+			configFile.close();
+		}
 		if (event->key.key == SDLK_ESCAPE)
 		{
 			if (emu.paused)

@@ -74,9 +74,7 @@ public:
 	void xor_r_r(Register8 reg1, uint8_t reg2);
 	void xor_r_rr(Register8 reg, CPU::RegisterPair pair);
 	void or_r_r(Register8 reg1, uint8_t reg2);
-	void or_r_rr(Register8 reg, CPU::RegisterPair pair);
 	void cp_r_r(Register8 reg1, uint8_t reg2);
-	void cp_r_rr(Register8 reg, CPU::RegisterPair pair);
 	void ret(CPU::Flag flag, bool ifNot);
 	void pop_rr(CPU::RegisterPair& pair);
 	void jp_f(CPU::Flag flag, bool ifNot);

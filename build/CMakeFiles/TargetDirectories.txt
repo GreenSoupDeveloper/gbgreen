@@ -1,0 +1,7 @@
+C:/Users/greens/Documents/GitHub/gbgreen/build/CMakeFiles/gbgreen.dir
+C:/Users/greens/Documents/GitHub/gbgreen/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/greens/Documents/GitHub/gbgreen/build/CMakeFiles/ZERO_CHECK.dir
+C:/Users/greens/Documents/GitHub/gbgreen/build/vendored/SDL/CMakeFiles/SDL3-shared.dir
+C:/Users/greens/Documents/GitHub/gbgreen/build/vendored/SDL/CMakeFiles/SDL3_test.dir
+C:/Users/greens/Documents/GitHub/gbgreen/build/vendored/SDL/CMakeFiles/SDL_uclibc.dir
+C:/Users/greens/Documents/GitHub/gbgreen/build/vendored/SDL/CMakeFiles/ALL_BUILD.dir

@@ -25,7 +25,7 @@ CPU::CPU()
 	SP = 0xFFFE;
 	PC = 0x0100;
 	IME = false;
-	bus.hram[0xFF83] = 0x0B;
+
 
 
 	timer.DIV = 0xABCC;
@@ -45,7 +45,8 @@ void CPU::initializeGameboy() {
 	SP = 0xFFFE;
 	PC = 0x0100;
 	IME = false;
-	bus.hram[0xFF83] = 0x0B;
+	
+	bus.bus_write(0xDEF4, 0x01);
 
 	bus.bus_write(0xFF00, 0xCF); // P1
 	bus.bus_write(0xFF01, 0x00); // SB
@@ -302,7 +303,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x33: SP++; break; // INC SP
 	case 0x34: value = bus.bus_read(HL.full); result = value + 1; insts.setFlag(cpu.FLAG_Z, result == 0); insts.setFlag(cpu.FLAG_N, false); insts.setFlag(cpu.FLAG_H, (value & 0x0F) + 1 > 0x0F); bus.bus_write(HL.full, result); break; // INC (HL)
 	case 0x35: value = bus.bus_read(HL.full); result = value - 1; insts.setFlag(cpu.FLAG_Z, result == 0); insts.setFlag(cpu.FLAG_N, true); insts.setFlag(cpu.FLAG_H, (value & 0x0F) == 0x00); bus.bus_write(HL.full, result); break;// DEC (HL)
-	case 0x36: value = bus.bus_read(PC + 1); bus.bus_write(HL.full, value); PC += 2; break; // LD (HL), n
+	case 0x36: value = bus.bus_read(PC + 1); bus.bus_write(HL.full, value); PC++; break; // LD (HL), n
 	case 0x37: insts.setFlag(FLAG_C, true); insts.setFlag(FLAG_N, false); insts.setFlag(FLAG_H, false); break; // SCF
 	case 0x38: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC)), FLAG_C, false); break; // JR C, *
 	case 0x39: insts.add_hl_rr(SP); break; // ADD HL, SP
@@ -454,7 +455,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xB3: insts.or_r_r(insts.REG_A, insts.getReg(insts.REG_E)); break;
 	case 0xB4: insts.or_r_r(insts.REG_A, insts.getReg(insts.REG_H)); break;
 	case 0xB5: insts.or_r_r(insts.REG_A, insts.getReg(insts.REG_L)); break;
-	case 0xB6: insts.or_r_rr(insts.REG_A, HL); break;
+	case 0xB6: insts.or_r_r(insts.REG_A, bus.bus_read(HL.full)); break;
 	case 0xB7: insts.or_r_r(insts.REG_A, insts.getReg(insts.REG_A)); break;
 	case 0xB8: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_B)); break;
 	case 0xB9: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_C)); break;
@@ -462,7 +463,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xBB: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_E)); break;
 	case 0xBC: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_H)); break;
 	case 0xBD: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_L)); break;
-	case 0xBE: insts.cp_r_rr(insts.REG_A, HL); break;
+	case 0xBE: insts.cp_r_r(insts.REG_A, bus.bus_read(HL.full)); break;
 	case 0xBF: insts.cp_r_r(insts.REG_A, insts.getReg(insts.REG_A)); break;
 
 
@@ -519,7 +520,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xEB: /*nothing*/ break; // nothing
 	case 0xEC: /*nothing*/ break; // nothing
 	case 0xED: /*nothing*/ break; // nothing
-	case 0xEE: insts.xor_r_r(insts.REG_A, static_cast<int8_t>(bus.bus_read(PC++))); break;
+	case 0xEE: insts.xor_r_r(insts.REG_A, bus.bus_read(PC++)); break;
 	case 0xEF: insts.rst_addr(0x28); break;
 
 
@@ -558,12 +559,12 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	flags[3] = (tempF & (1 << 4)) ? 'C' : '-';  // Bit 4
 	flags[4] = '\0';
 	
-	/*if (bus.bus_read(0xFF83) != tempff) {
-		logdata += "ff83: " + byteToHexString(bus.bus_read(0xFF83)) + " PC: " + wordToHexString(tempPC) + " curline: " + std::to_string(currline) + "\n";
-		tempff = bus.bus_read(0xFF83);
+	/*if (bus.bus_read(0xDEF4) != tempff) {
+		logdata += "def4: " + byteToHexString(bus.bus_read(0xDEF4)) + " PC: " + wordToHexString(tempPC) + " curline: " + std::to_string(currline) + "\n";
+		tempff = bus.bus_read(0xDEF4);
 	}
 	currline++;*/
-	logdata += "A:" + byteToHexString(tempA) + " ";
+		logdata += "A:" + byteToHexString(tempA) + " ";
 	logdata += "F:" + byteToHexString(tempF) + " ";
 	logdata += "B:" + byteToHexString(tempBC >> 8) + " ";
 	logdata += "C:" + byteToHexString(tempBC & 0xFF) + " ";
@@ -577,9 +578,10 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	logdata += byteToHexString(bus.bus_read(tempPC + 1)) + ",";
 	logdata += byteToHexString(bus.bus_read(tempPC + 2)) + ",";
 	logdata += byteToHexString(bus.bus_read(tempPC + 3)) + "\n";
-
-	printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) %s BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), flags, tempBC, tempDE, tempHL, tempSP, tempIF, tempIE);
 	
+	printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), tempBC, tempDE, tempHL, tempSP, tempIF, tempIE);
+	
+
 }
 
 void CPU::Cycle() {
@@ -625,6 +627,7 @@ void CPU::Cycle() {
 		t_cycles += 4;
 		if (haltedshow) {
 			std::cout << "Halted!\n";
+
 			haltedshow = false;
 		}
 		if ((IME && (bus.IE & bus.IF & 0x1F)) || (!IME && haltBug)) {
@@ -633,10 +636,13 @@ void CPU::Cycle() {
 				IME ? "interrupt" : "HALT bug");
 		}
 	}
-	if (IME && (bus.IE & bus.IF & 0x1F)) {
-		HandleInterrupt();
-		imeAfterNextInsts = 0;
-	}
+	if ((IME && (bus.IE & bus.IF & 0x1F)) || (!IME && haltBug)) {
+			halted = false;
+			printf("CPU woken by %s\n",
+				IME ? "interrupt" : "HALT bug");
+			HandleInterrupt();
+			imeAfterNextInsts = 0;
+		}
 
 	
 	if (imeAfterNextInsts == 5) {

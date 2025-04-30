@@ -123,15 +123,14 @@ void Instruction::ld_a_addr_rr(CPU::RegisterPair& reg, int decOrInc) {
 }
 void Instruction::rrc(Register8 reg) {
 	uint8_t& r = getReg(reg);
-	uint8_t bit0 = r & 0x01; // Get bit 0 (lowest bit of A)
-	uint8_t carry = getFlag(cpu.FLAG_C); // Get current Carry flag value
+	uint8_t bit0 = r & 0x01; // Save bit 0
 
-	r = (r >> 1) | (carry << 7); // Shift A right and place carry in bit 7
-	setFlag(cpu.FLAG_C, bit0); // Set Carry flag to bit 0 of A
+	r = (r >> 1) | (bit0 << 7); // Rotate right, bit 0 goes to bit 7
 
-	setFlag(cpu.FLAG_Z, false); // Always cleared
-	setFlag(cpu.FLAG_N, false); // Always cleared
-	setFlag(cpu.FLAG_H, false); // Always cleared
+	setFlag(cpu.FLAG_C, bit0);  // Set Carry flag to old bit 0
+	setFlag(cpu.FLAG_Z, false); // Z is always cleared
+	setFlag(cpu.FLAG_N, false); // N is always cleared
+	setFlag(cpu.FLAG_H, false); // H is always cleared
 }
 void Instruction::rla() {
 	uint8_t& A = cpu.AF.hi;
@@ -352,8 +351,10 @@ void Instruction::and_r_rr(Register8 reg, CPU::RegisterPair pair) {
 
 }
 void Instruction::xor_r_r(Register8 reg1, uint8_t reg2) {
-	getReg(reg1) ^= reg2;
-	setFlag(cpu.FLAG_Z, (getReg(reg1) == 0));
+	getReg(REG_A) ^= reg2;
+	
+
+	setFlag(cpu.FLAG_Z, (getReg(REG_A) == 0));
 	setFlag(cpu.FLAG_N, false);
 	setFlag(cpu.FLAG_H, false);
 	setFlag(cpu.FLAG_C, false);
@@ -367,48 +368,28 @@ void Instruction::xor_r_rr(Register8 reg, CPU::RegisterPair pair) {
 	setFlag(cpu.FLAG_C, false);
 }
 void Instruction::or_r_r(Register8 reg1, uint8_t reg2) {
-	getReg(reg1) |= reg2;
+	getReg(REG_A) |= reg2;
 
-	setFlag(cpu.FLAG_Z, (getReg(reg1) == 0));
+	setFlag(cpu.FLAG_Z, (getReg(REG_A) == 0));
 	setFlag(cpu.FLAG_N, false);
 	setFlag(cpu.FLAG_H, false);
 	setFlag(cpu.FLAG_C, false);
 }
-void Instruction::or_r_rr(Register8 reg, CPU::RegisterPair pair) {
-	getReg(reg) |= bus.bus_read(pair.full);
 
-	setFlag(cpu.FLAG_Z, (getReg(reg) == 0));
-	setFlag(cpu.FLAG_N, false);
-	setFlag(cpu.FLAG_H, false);
-	setFlag(cpu.FLAG_C, false);
-}
+
 void Instruction::cp_r_r(Register8 reg1, uint8_t reg2) {
-	uint8_t a = getReg(reg1);  // Value in A
-	uint8_t b = reg2;
 
-	uint8_t result = a - b;
-	
+	uint8_t temp_val = getReg(REG_A);
+	setFlag(cpu.FLAG_C, reg2 > temp_val);
+	setFlag(cpu.FLAG_H, (reg2 & 0x0f) > (temp_val & 0x0f));
 
-	// Set flags (don't modify registers)
-	setFlag(cpu.FLAG_Z, (result == 0));       // Zero flag
-	setFlag(cpu.FLAG_N, true);                // Subtraction flag
-	setFlag(cpu.FLAG_H, (a & 0xF) < (b & 0xF)); // Half-carry (borrow from bit 4)
-	setFlag(cpu.FLAG_C, a < b);               // Carry flag (borrow overall)
-}
+	temp_val -= reg2;
 
-void Instruction::cp_r_rr(Register8 reg, CPU::RegisterPair pair) {
-	uint8_t a = getReg(reg);          // Store original register value
-	uint8_t b = bus.bus_read(pair.full);
-	uint8_t result = a - b;
-
-	// Set flags (don't modify registers)
-	setFlag(cpu.FLAG_Z, (result == 0));
+	setFlag(cpu.FLAG_Z, !temp_val);
 	setFlag(cpu.FLAG_N, true);
-	// HALF-CARRY: Check borrow from bit 4
-	setFlag(cpu.FLAG_H, ((a & 0xF) - (b & 0xF)) < 0);
-	// CARRY: Check borrow from bit 7
-	setFlag(cpu.FLAG_C, a < b);
 }
+
+
 void Instruction::ret(CPU::Flag flag, bool ifNot) {
 	// Always consume 8 cycles (minimum for checking condition)
 	cpu.temp_t_cycles += 8;
@@ -572,9 +553,11 @@ void Instruction::ld_a_a16() {
 	uint8_t low = bus.bus_read(cpu.PC++);
 	uint8_t high = bus.bus_read(cpu.PC++);
 	uint16_t address = (high << 8) | low;
+	printf("addr %04X", address);
 
 	// Load from memory into A
 	getReg(REG_A) = bus.bus_read(address);
+
 
 }
 
