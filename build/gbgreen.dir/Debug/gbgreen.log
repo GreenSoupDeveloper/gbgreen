@@ -1,15 +1,17 @@
-﻿  cpu.cpp
+﻿  ext_instructions.cpp
 C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.h(14,16): warning C4201: nonstandard extension used: nameless struct/union
-  (compiling source file '../src/cpu.cpp')
+  (compiling source file '../src/ext_instructions.cpp')
   
-C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(31,14): warning C4305: '=': truncation from 'int' to 'uint8_t'
-C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(31,14): warning C4309: '=': truncation of constant value
-C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(550,10): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 1 has type 'uint64_t'
-      C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(550,10):
+C:\Users\greens\Documents\GitHub\gbgreen\src\ext_instructions.cpp(327,10): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 1 has type 'uint64_t'
+      C:\Users\greens\Documents\GitHub\gbgreen\src\ext_instructions.cpp(327,10):
       consider using '%lld' in the format string
-      C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(550,10):
+      C:\Users\greens\Documents\GitHub\gbgreen\src\ext_instructions.cpp(327,10):
       consider using '%Id' in the format string
-      C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(550,10):
+      C:\Users\greens\Documents\GitHub\gbgreen\src\ext_instructions.cpp(327,10):
       consider using '%I64d' in the format string
   
+C:\Users\greens\Documents\GitHub\gbgreen\src\ext_instructions.cpp(14,10): warning C4101: 'value': unreferenced local variable
+C:\Users\greens\Documents\GitHub\gbgreen\src\ext_instructions.cpp(14,17): warning C4101: 'result': unreferenced local variable
+C:\Users\greens\Documents\GitHub\gbgreen\src\ext_instructions.cpp(14,25): warning C4101: 'offset': unreferenced local variable
+C:\Users\greens\Documents\GitHub\gbgreen\src\ext_instructions.cpp(15,11): warning C4101: 'addr': unreferenced local variable
   gbgreen.vcxproj -> C:\Users\greens\Documents\GitHub\gbgreen\bin\Debug\gbgreen.exe

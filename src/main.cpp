@@ -327,14 +327,18 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 	
 
 	
-
 	if (stay) {
-		cpu.Cycle();
+
+	
+				cpu.Cycle();
+		
+	
+
+
+		//UpdatePixels();
+		//SDL_Delay(1);
 		emu.ticks++;
-		
-	}
-	else {
-		
+
 	}
 
 	return SDL_APP_CONTINUE;

@@ -535,21 +535,24 @@ void Instruction::ld_a16_a() {
 
 }
 void Instruction::ld_hl_sp_r8() {
-	// 1. Read signed offset (1 byte)
 	int8_t offset = static_cast<int8_t>(bus.bus_read(cpu.PC++));
+	uint16_t sp = cpu.SP;
+	uint16_t result = sp + offset;
 
-	// 2. Calculate 16-bit result (SP + offset)
-	uint32_t result = cpu.SP + offset;
+	// Store result in HL
+	cpu.HL.full = result;
 
-	// 3. Store in HL (16-bit)
-	cpu.HL.full = static_cast<uint16_t>(result);
+	// Clear Z and N
+	setFlag(cpu.FLAG_Z, false);
+	setFlag(cpu.FLAG_N, false);
 
-	// 4. Set flags
-	setFlag(cpu.FLAG_Z, false);  // Always 0
-	setFlag(cpu.FLAG_N, false);  // Always 0
-	setFlag(cpu.FLAG_H, ((cpu.SP ^ offset ^ (result & 0xFFFF)) & 0x10) != 0);
-	setFlag(cpu.FLAG_C, (result & 0x10000) != 0);
+	// Half-carry: if lower nibbles overflow past 0xF
+	setFlag(cpu.FLAG_H, ((sp & 0xF) + (offset & 0xF)) > 0xF);
+
+	// Carry: if lower bytes overflow past 0xFF
+	setFlag(cpu.FLAG_C, ((sp & 0xFF) + (offset & 0xFF)) > 0xFF);
 }
+
 void Instruction::ld_a_a16() {
 	// Read 16-bit address (little-endian)
 	uint8_t low = bus.bus_read(cpu.PC++);
