@@ -215,8 +215,7 @@ void Instruction::ld_r_r(Register8 dest, Register8 src) {
 }
 void Instruction::ld_r_rr(Register8 reg, CPU::RegisterPair pair) {
 	getReg(reg) = bus.bus_read(pair.full);
-	if (pair.full == 0xFF83)
-		printf("ff83: %02X\n", bus.bus_read(pair.full));
+	
 }
 void Instruction::ld_rr_r(CPU::RegisterPair pair, Register8 reg) {
 	bus.bus_write(pair.full, getReg(reg));  // Store the value in B into memory at address HL
@@ -558,7 +557,7 @@ void Instruction::ld_a_a16() {
 	uint8_t low = bus.bus_read(cpu.PC++);
 	uint8_t high = bus.bus_read(cpu.PC++);
 	uint16_t address = (high << 8) | low;
-	printf("addr %04X", address);
+	//printf("addr %04X", address);
 
 	// Load from memory into A
 	getReg(REG_A) = bus.bus_read(address);

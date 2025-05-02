@@ -47,13 +47,13 @@ void IO::dbg_update() {
     //printf("dbg %04X\n", bus.bus_read(0xFF02));
    // printf("DEBUG: %02x", bus.bus_read(0xFF02));
 
-    if (bus.bus_read(0xFF02) == 0x81) {
-        char c = bus.bus_read(0xFF01);
+    if (bus.io[0x02] == 0x81) {
+        char c = bus.io[0x01];
         //printf("DEBUG: %s", c);
         dbg_msg[msg_size++] = c;
         
 
-        bus.bus_write(0xFF02, 0x00);
+        bus.io[0x02]= 0x00;
     }
    
 }

@@ -1,7 +1,7 @@
 ﻿#define SDL_MAIN_USE_CALLBACKS 1  /* use the callbacks instead of main() */
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
@@ -44,8 +44,133 @@ void UpdateCPU() {
 
 }
 
+
+
+
+void UpdatePixels() {
+	SDL_SetRenderDrawColor(emu.renderer, 0, 0, 0, 255);
+	SDL_RenderClear(emu.renderer);
+
+	// Fill pixel array with white (for testing)
+
+
+	SDL_UpdateTexture(emu.texture, NULL, emu.pixels, emu.gbResX * sizeof(uint32_t));
+
+	// In SDL3, use SDL_RenderTexture instead of SDL_RenderCopy
+	SDL_RenderTexture(emu.renderer, emu.texture, NULL, NULL);
+
+	SDL_RenderPresent(emu.renderer);
+}
+bool stay = true;
+
+
+
+
+/* Called once per SDL event */
+SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
+{
+
+	if (event->type == SDL_EVENT_QUIT) {
+		return SDL_APP_SUCCESS; // exit the app
+	}
+
+	if (event->type == SDL_EVENT_QUIT)
+	{
+		exit(0);
+	}
+
+	if (event->type == SDL_EVENT_KEY_DOWN)
+	{
+		if (event->key.key == SDLK_P)
+		{
+			if (stay)
+				stay = false;
+			else
+				stay = true;
+
+			//update_dbg_window();
+		}
+		if (event->key.key == SDLK_L) {
+
+			std::ofstream configFile("cpulogs.txt");
+
+
+
+			configFile << cpu.logdata << std::endl;
+
+			configFile.close();
+		}
+		if (event->key.key == SDLK_O) {
+
+			std::string thing;
+			int aaa = 0;
+			for (uint16_t i = 0x8000; i < 0x9FFF; i++) {
+				//if(bus.bus_read(i) != 0x00)
+				thing += (char)bus.bus_read(i);
+
+			}
+			std::ofstream configFile("vram_dump.txt");
+
+
+
+			configFile << thing << std::endl;
+
+			configFile.close();
+		}
+		if (event->key.key == SDLK_ESCAPE)
+		{
+			if (emu.paused)
+				emu.paused = false;
+			else
+				emu.paused = true;
+		}
+	}
+		
+
+
+	return SDL_APP_CONTINUE;
+}
+
+/* Called once at shutdown */
+void SDL_AppQuit(void* appstate, SDL_AppResult result)
+{
+
+
+	if (emu.texture) SDL_DestroyTexture(emu.texture);
+	if (emu.renderer) SDL_DestroyRenderer(emu.renderer);
+	if (emu.window) SDL_DestroyWindow(emu.window);
+
+	SDL_Log("shutting down emulator..");
+	exit(0);
+}
+
+
+int updatelog = 0;
+void AppUpdates() {
+
+
+
+
+	if (stay) {
+
+		//for(int i = 0; i < 144; i++)
+		cpu.Cycle();
+
+
+
+
+		//UpdatePixels();
+		//SDL_Delay(1);
+		emu.ticks++;
+		
+
+	}
+	updatelog++;
+
+	
+}
 /* Called once at startup */
-SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
+int main(int argc, char* argv[])
 {
 
 
@@ -101,245 +226,25 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 
 
-	
 
+	SDL_Event event;
 
-	return SDL_APP_CONTINUE;
-}
-
-
-void UpdatePixels() {
-	SDL_SetRenderDrawColor(emu.renderer, 0, 0, 0, 255);
-	SDL_RenderClear(emu.renderer);
-
-	// Fill pixel array with white (for testing)
-
-
-	SDL_UpdateTexture(emu.texture, NULL, emu.pixels, emu.gbResX * sizeof(uint32_t));
-
-	// In SDL3, use SDL_RenderTexture instead of SDL_RenderCopy
-	SDL_RenderTexture(emu.renderer, emu.texture, NULL, NULL);
-
-	SDL_RenderPresent(emu.renderer);
-}
-bool stay = true;
-
-
-
-
-/* Called once per SDL event */
-SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
-{
-
-	if (event->type == SDL_EVENT_QUIT) {
-		return SDL_APP_SUCCESS; // exit the app
-	}
-
-	if (event->type == SDL_EVENT_QUIT)
-	{
-		exit(0);
-	}
-
-	if (event->type == SDL_EVENT_KEY_DOWN)
-	{
-		if (event->key.key == SDLK_P)
-		{
-			if (stay)
-				stay = false;
-			else
-				stay = true;
-
-			//update_dbg_window();
-		}
-		if (event->key.key == SDLK_L) {
-		
-			std::ofstream configFile("cpulogs.txt");
-
-
-
-			configFile << cpu.logdata << std::endl;
-
-			configFile.close();
-		}
-		if (event->key.key == SDLK_O) {
-
-			std::string thing;
-			int aaa = 0;
-			for (uint16_t i = 0x8000; i < 0x9FFF; i++) {
-				//if(bus.bus_read(i) != 0x00)
-				thing += (char)bus.bus_read(i);
-
-			}
-			std::ofstream configFile("vram_dump.txt");
-
-
-
-			configFile << thing << std::endl;
-
-			configFile.close();
-		}
-		if (event->key.key == SDLK_ESCAPE)
-		{
-			if (emu.paused)
-				emu.paused = false;
-			else
-				emu.paused = true;
-		}
-		if (emu.paused) {
-
-			if (event->key.key == SDLK_UP)
-			{
-				emu.menuItemSelected -= 1;
-				if (emu.menuItemOpened == 0) {
-					if (emu.menuItemSelected < 0) {
-						emu.menuItemSelected = 3;
-					}
-				}
-				else {
-					if (emu.menuItemSelected < 0) {
-						emu.menuItemSelected = 0;
-					}
-				}
-			}
-			if (event->key.key == SDLK_DOWN)
-			{
-				emu.menuItemSelected += 1;
-				if (emu.menuItemOpened == 0) {
-					if (emu.menuItemSelected > 3) {
-						emu.menuItemSelected = 0;
-					}
-				}
-				else {
-					if (emu.menuItemSelected > 0) {
-						emu.menuItemSelected = 0;
-					}
-				}
-			}
-			if (event->key.key == SDLK_LEFT)
-			{
-				emu.menuItemOptionSelected -= 1;
-				if (emu.menuItemSelected == 0) {
-					if (emu.menuItemOptionSelected < 0) {
-						emu.menuItemOptionSelected = 2;
-					}
-
-
-					emu.selectedColorPallete = emu.menuItemOptionSelected;
-					tools.saveConfig();
-				}
-			}
-			if (event->key.key == SDLK_RIGHT)
-			{
-				emu.menuItemOptionSelected += 1;
-
-				if (emu.menuItemSelected == 0) {
-					if (emu.menuItemOptionSelected > 2) {
-						emu.menuItemOptionSelected = 0;
-					}
-
-
-					emu.selectedColorPallete = emu.menuItemOptionSelected;
-					tools.saveConfig();
-				}
-
-			}
-			if (event->key.key == SDLK_RETURN)
-			{
-
-				if (emu.menuItemSelected == 0) {
-					if (emu.menuItemOpened == 0)
-						emu.paused = false;
-
-					//hi
-				}
-				else if (emu.menuItemSelected == 1) {
-					if (emu.menuItemOpened == 0) {
-
-						if (!cart.LoadROM("test.gb")) //loading ROM provided as argument
-						{
-							std::cerr << "ROM could not be loaded. Possibly invalid path given\n";
-							emu.romLoaded = false;
-						}
-						else {
-							emu.romLoaded = true;
-						}
-						emu.paused = false;
-					}
-				}
-				else if (emu.menuItemSelected == 2) {
-					if (emu.menuItemOpened == 0) {
-						emu.menuItemOpened = 3;
-						emu.paused = true;
-						emu.menuItemSelected = 0;
-						emu.menuItemOptionSelected = emu.selectedColorPallete;
-					}
-
-				}
-
-				else if (emu.menuItemSelected == 3) {
-					if (emu.menuItemOpened == 0) {
-						emu.paused = false;
-						exit(0);
-					}
-				}
+	while (true) {
+		while (SDL_PollEvent(&event)) {
+			SDL_AppResult result = SDL_AppEvent(nullptr, &event);
+			if (result == SDL_APP_SUCCESS) {
+				SDL_AppQuit(nullptr, SDL_APP_SUCCESS);
+				break;
 			}
 		}
 
-		for (int i = 0; i < 16; ++i)
-		{
-			/*if (event->key.key == keymap[i])
-			{
-				chip8.set_keypad_value(i, 1);
-			}*/
+		AppUpdates();
+		AppUpdates();
+		if (updatelog == 144) {
+			io.dbg_update();
+			io.dbg_print();
+			updatelog = 0;
 		}
 	}
-
-	if (event->type == SDL_EVENT_KEY_UP)
-	{
-		/*for (int i = 0; i < 16; ++i)
-		{
-			if (event->key.key == keymap[i])
-			{
-				chip8.set_keypad_value(i, 0);
-			}
-		}*/
-	}
-
-
-	return SDL_APP_CONTINUE;
-}
-
-/* Called once at shutdown */
-void SDL_AppQuit(void* appstate, SDL_AppResult result)
-{
-
-
-	if (emu.texture) SDL_DestroyTexture(emu.texture);
-	if (emu.renderer) SDL_DestroyRenderer(emu.renderer);
-	if (emu.window) SDL_DestroyWindow(emu.window);
-
-	SDL_Log("shutting down emulator..");
-}
-/* Called once per frame */
-SDL_AppResult SDL_AppIterate(void* appstate)
-{
-	
-	
-
-	
-	if (stay) {
-
-	
-				cpu.Cycle();
-		
-	
-
-
-		//UpdatePixels();
-		//SDL_Delay(1);
-		emu.ticks++;
-
-	}
-
-	return SDL_APP_CONTINUE;
+	SDL_AppQuit(nullptr, SDL_APP_SUCCESS);
 }

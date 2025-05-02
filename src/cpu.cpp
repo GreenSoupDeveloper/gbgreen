@@ -551,7 +551,22 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 		return;
 		break;
 	}
-	
+
+	logdata += "A:" + byteToHexString(tempA) + " ";
+	logdata += "F:" + byteToHexString(tempF) + " ";
+	logdata += "B:" + byteToHexString(tempBC >> 8) + " ";
+	logdata += "C:" + byteToHexString(tempBC & 0xFF) + " ";
+	logdata += "D:" + byteToHexString(tempDE >> 8) + " ";
+	logdata += "E:" + byteToHexString(tempDE & 0xFF) + " ";
+	logdata += "H:" + byteToHexString(tempHL >> 8) + " ";
+	logdata += "L:" + byteToHexString(tempHL & 0xFF) + " ";
+	logdata += "SP:" + wordToHexString(tempSP) + " ";
+	logdata += "PC:" + wordToHexString(tempPC) + " ";
+	logdata += "PCMEM:" + byteToHexString(bus.bus_read(tempPC)) + ",";
+	logdata += byteToHexString(bus.bus_read(tempPC + 1)) + ",";
+	logdata += byteToHexString(bus.bus_read(tempPC + 2)) + ",";
+	logdata += byteToHexString(bus.bus_read(tempPC + 3)) + "\n";
+
 	
 	
 	/*if (bus.bus_read(0xDEF4) != tempff) {
@@ -561,57 +576,60 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	currline++;*/
 
 	
-	printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), tempBC, tempDE, tempHL, tempSP, tempIF, tempIE);
+	//printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), tempBC, tempDE, tempHL, tempSP, tempIF, tempIE);
 	
 
 }
 
 void CPU::Cycle() {
-	if (!halted) {
-		uint8_t opcode = bus.bus_read(PC);
-		currOpcode = opcode;
-		tempPC = PC;
-		tempA = AF.hi;
-		tempF = AF.lo;
-		tempBC = BC.full;
-		tempDE = DE.full;
-		tempHL = HL.full;
-		tempIF = bus.IF;
-		tempIE = bus.IE;
-		tempSP = SP;
-		PC++;
-		temp_t_cycles = 0; // reset before instruction
-		ExecuteInstruction(opcode);
-		t_cycles += temp_t_cycles;
-		m_cycles += temp_t_cycles / 4;
-		//timer.timer_tick();
-	 
-		 
-	}
-	else {
-		
-		t_cycles += 4;
-		if (haltedshow) {
-			std::cout << "Halted!\n";
-
-			haltedshow = false;
-		}
 	
-	}
-	if ((IME && (bus.IE & bus.IF & 0x1F)) || (!IME && haltBug)) {
+		if (!halted) {
+
+			uint8_t opcode = bus.bus_read(PC);
+			currOpcode = opcode;
+			tempPC = PC;
+			tempA = AF.hi;
+			tempF = AF.lo;
+			tempBC = BC.full;
+			tempDE = DE.full;
+			tempHL = HL.full;
+			tempIF = bus.IF;
+			tempIE = bus.IE;
+			tempSP = SP;
+			PC++;
+			temp_t_cycles = 0; // reset before instruction
+			ExecuteInstruction(opcode);
+			t_cycles += temp_t_cycles;
+			m_cycles += temp_t_cycles / 4;
+			//timer.timer_tick();
+
+
+		}
+		else {
+
+			t_cycles += 4;
+			if (haltedshow) {
+				std::cout << "Halted!\n";
+
+				haltedshow = false;
+			}
+
+		}
+		if ((IME && (bus.IE & bus.IF & 0x1F)) || (!IME && haltBug)) {
 			halted = false;
-			
+
 			imeAfterNextInsts = 0;
 		}
 
+
+		if (imeAfterNextInsts == 5) {
+			IME = true;
+			imeAfterNextInsts = 0;
+		}
+		ticks += 1;
+		
 	
-	if (imeAfterNextInsts == 5) {
-		IME = true;
-		imeAfterNextInsts = 0;
-	}
-	ticks += 1;
-	io.dbg_update();
-	io.dbg_print();
+	
 }
 std::string CPU::byteToHexString(uint8_t value) {
 	char buffer[3];
