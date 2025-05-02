@@ -335,7 +335,7 @@ void ExtInstruction::ExecuteExtInstruction(uint8_t opcode) {
 
 void ExtInstruction::rlc_r(Instruction::Register8 reg) {
 	uint8_t b = insts.getReg(reg);
-	uint8_t bit7 = (b >> 7) & 1;
+	uint8_t bit7 = (b >> 7) & 0x01;
 	uint8_t result = ((b << 1) | bit7) & 0xFF;
 
 	insts.getReg(reg) = result;

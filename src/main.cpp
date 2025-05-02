@@ -17,7 +17,7 @@
 #include <mbc.h>
 #include <timer.h>
 #include <ppu.h>
-
+#include <thread>
 CPU::~CPU() {}
 Cartridge::~Cartridge() {}
 Instruction::~Instruction() {}
@@ -35,7 +35,14 @@ MBC mbc;
 Timer timer;
 PPU ppu;
 
+void UpdateCPU() {
+	if (!emu.paused) {
+		if (emu.romLoaded) {
+			cpu.Cycle();
+		}
+	}
 
+}
 
 /* Called once at startup */
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
@@ -95,11 +102,11 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char* argv[])
 
 
 	
-	timer.timer_init();
-	
+
 
 	return SDL_APP_CONTINUE;
 }
+
 
 void UpdatePixels() {
 	SDL_SetRenderDrawColor(emu.renderer, 0, 0, 0, 255);
@@ -154,13 +161,13 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 
 			configFile.close();
 		}
-		if (event->key.key == SDLK_I) {
+		if (event->key.key == SDLK_O) {
 
 			std::string thing;
 			int aaa = 0;
 			for (uint16_t i = 0x8000; i < 0x9FFF; i++) {
 				//if(bus.bus_read(i) != 0x00)
-				thing += bus.bus_read(i);
+				thing += (char)bus.bus_read(i);
 
 			}
 			std::ofstream configFile("vram_dump.txt");
@@ -316,55 +323,17 @@ void SDL_AppQuit(void* appstate, SDL_AppResult result)
 /* Called once per frame */
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
+	
+	
+
+	
 
 	if (stay) {
-
-		if (emu.paused) {
-			if (emu.menuItemOpened == 0) {
-				if (emu.menuItemSelected == 0)
-					tools.RenderToDisplay("assets/menu1_sel1");
-				else if (emu.menuItemSelected == 1)
-					tools.RenderToDisplay("assets/menu1_sel2");
-				else if (emu.menuItemSelected == 2)
-					tools.RenderToDisplay("assets/menu1_sel3");
-				else
-					tools.RenderToDisplay("assets/menu1_sel4");
-			}
-			else {
-				if (emu.menuItemSelected == 0) {
-					if (emu.menuItemOptionSelected == 0)
-						tools.readPaletteFile("palettes/Monochrome.gbcp");
-					else if (emu.menuItemOptionSelected == 1)
-						tools.readPaletteFile("palettes/Green.gbcp");
-					else
-						tools.readPaletteFile("palettes/VeryGreen.gbcp");
-
-
-					if (emu.menuItemOptionSelected == 0)
-						tools.RenderToDisplay("assets/menu2_sel1-1");
-					else if (emu.menuItemOptionSelected == 1)
-						tools.RenderToDisplay("assets/menu2_sel1-2");
-					else
-						tools.RenderToDisplay("assets/menu2_sel1-3");
-				}
-			}
-
-		}
-		else {
-			if (!emu.romLoaded) {
-				tools.RenderToDisplay("assets/title");
-				emu.menuItemSelected = 0;
-				emu.menuItemOpened = 0;
-			}
-		}
-		if (emu.romLoaded) {
-			cpu.Cycle();
-		}
-		
-
-		UpdatePixels();
-		//SDL_Delay(1);
+		cpu.Cycle();
 		emu.ticks++;
+		
+	}
+	else {
 		
 	}
 

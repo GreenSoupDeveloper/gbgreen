@@ -57,22 +57,24 @@ void Instruction::ld_addr_rr_a(CPU::RegisterPair& reg, int ifthing) {
 }
 void Instruction::inc_r(Register8 reg) {
 	uint8_t& r = getReg(reg);
+	uint8_t old = r; // save original value
 	uint8_t result = r + 1;
 
 	setFlag(cpu.FLAG_Z, result == 0);
 	setFlag(cpu.FLAG_N, false);
-	setFlag(cpu.FLAG_H, (r & 0x0F) + 1 > 0x0F);
+	setFlag(cpu.FLAG_H, (old & 0x0F) + 1 > 0x0F);
 
 	r = result;
 }
+
 void Instruction::dec_r(Register8 reg) {
 	uint8_t& r = getReg(reg);
 	uint8_t old = r;
-	uint8_t result = r - 1;
+	uint8_t result = old - 1;
 
 	setFlag(cpu.FLAG_Z, result == 0);
 	setFlag(cpu.FLAG_N, true);
-	setFlag(cpu.FLAG_H, (old & 0x0F) == 0x00); // More accurate check
+	setFlag(cpu.FLAG_H, (old & 0x0F) == 0x00);
 
 	r = result;
 }
@@ -82,8 +84,8 @@ void Instruction::ld_r_n(Register8 reg, uint8_t value) {
 	//printf("hi %d", getReg(reg));
 }
 
-void Instruction::rlc_r(Register8 reg) {
-	uint8_t& r = getReg(reg);
+void Instruction::rlca() {
+	uint8_t& r = getReg(REG_A);
 	uint8_t bit7 = (r & 0x80) >> 7; // Get bit 7
 
 	r = (r << 1) | bit7;
@@ -121,8 +123,8 @@ void Instruction::ld_a_addr_rr(CPU::RegisterPair& reg, int decOrInc) {
 		reg.full++;
 
 }
-void Instruction::rrc(Register8 reg) {
-	uint8_t& r = getReg(reg);
+void Instruction::rrca() {
+	uint8_t& r = getReg(REG_A);
 	uint8_t bit0 = r & 0x01; // Save bit 0
 
 	r = (r >> 1) | (bit0 << 7); // Rotate right, bit 0 goes to bit 7
@@ -133,7 +135,7 @@ void Instruction::rrc(Register8 reg) {
 	setFlag(cpu.FLAG_H, false); // H is always cleared
 }
 void Instruction::rla() {
-	uint8_t& A = cpu.AF.hi;
+	uint8_t& A = getReg(REG_A);
 	uint8_t bit7 = (A >> 7) & 0x01;  // Get bit 7 (highest bit of A)
 	uint8_t carry = getFlag(cpu.FLAG_C); // Get current Carry flag value
 
@@ -145,11 +147,11 @@ void Instruction::rla() {
 	setFlag(cpu.FLAG_H, false); // Always cleared
 }
 void Instruction::jr_n() {
-	int8_t offset = static_cast<int8_t>(bus.bus_read(cpu.PC));
+	int8_t offset = bus.bus_read(cpu.PC);
 	cpu.PC += 1 + offset;
 }
-void Instruction::rr_r(Register8 reg) {
-	uint8_t& r = getReg(reg);
+void Instruction::rra() {
+	uint8_t& r = getReg(REG_A);
 	uint8_t bit0 = r & 0x01;  // Get bit 0 (lowest bit of A)
 	uint8_t carry = getFlag(cpu.FLAG_C); // Get current Carry flag value
 

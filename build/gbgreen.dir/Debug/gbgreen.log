@@ -1,11 +1,4 @@
-﻿  instructions.cpp
-C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.h(14,16): warning C4201: nonstandard extension used: nameless struct/union
-  (compiling source file '../src/instructions.cpp')
-  
-C:\Users\greens\Documents\GitHub\gbgreen\src\instructions.cpp(353,37): warning C4100: 'reg1': unreferenced formal parameter
-C:\Users\greens\Documents\GitHub\gbgreen\src\instructions.cpp(370,36): warning C4100: 'reg1': unreferenced formal parameter
-C:\Users\greens\Documents\GitHub\gbgreen\src\instructions.cpp(380,36): warning C4100: 'reg1': unreferenced formal parameter
-  cpu.cpp
+﻿  cpu.cpp
 C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.h(14,16): warning C4201: nonstandard extension used: nameless struct/union
   (compiling source file '../src/cpu.cpp')
   
@@ -19,5 +12,4 @@ C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(550,10): warning C4477: 'pr
       C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(550,10):
       consider using '%I64d' in the format string
   
-  Generating Code...
   gbgreen.vcxproj -> C:\Users\greens\Documents\GitHub\gbgreen\bin\Debug\gbgreen.exe

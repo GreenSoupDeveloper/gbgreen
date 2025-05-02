@@ -17,7 +17,9 @@ public:
         uint8_t f_bgp : 1;
 
     } oam_entry;
-
+    struct Tile {
+        uint8_t data[16];  // 2 bytes per row (8 rows)
+    };
     /*
      Bit7   BG and Window over OBJ (0=No, 1=BG and Window colors 1-3 over the OBJ)
      Bit6   Y flip          (0=Normal, 1=Vertically mirrored)
@@ -29,6 +31,9 @@ public:
 
    
         oam_entry oam_ram[40];
+        Tile getTile(uint8_t tileIndex);
+        uint8_t getPixel(const Tile& tile, uint8_t x, uint8_t y);
+        uint32_t getPixelColor(uint8_t pixelValue);
     
 
     void ppu_init();

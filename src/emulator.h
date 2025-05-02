@@ -26,6 +26,7 @@ public:
     };
     bool romLoaded = false;
     bool running = false;
+    bool writetodisplay = false;
     //menu shit
     bool paused = false;
     int menuItemSelected = 0;

@@ -247,7 +247,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x04: insts.inc_r(insts.REG_B); break; // INC B
 	case 0x05: insts.dec_r(insts.REG_B); break;// DEC B
 	case 0x06: insts.ld_r_n(insts.REG_B, bus.bus_read(PC++)); break; // LD B, n
-	case 0x07: insts.rlc_r(insts.REG_A); break; // RLCA
+	case 0x07: insts.rlca(); break; // RLCA
 	case 0x08: insts.ld_a16_sp(); break; // LD (nn), SP
 	case 0x09: insts.add_hl_rr(BC.full); break; // ADD HL, BC
 	case 0x0A: insts.ld_a_addr_rr(BC, 0); break; // LD A, (BC)
@@ -255,7 +255,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x0C: insts.inc_r(insts.REG_C); break; // INC C
 	case 0x0D: insts.dec_r(insts.REG_C); break; // DEC C
 	case 0x0E: insts.ld_r_n(insts.REG_C, bus.bus_read(PC++)); break; // LD C, n
-	case 0x0F: insts.rrc(insts.REG_A); break; // RRCA
+	case 0x0F: insts.rrca(); break; // RRCA
 
 
 
@@ -274,7 +274,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x1C: insts.inc_r(insts.REG_E); break; // INC E
 	case 0x1D: insts.dec_r(insts.REG_E); break; // DEC E
 	case 0x1E: insts.ld_r_n(insts.REG_E, bus.bus_read(PC++)); break; // LD E, n
-	case 0x1F: insts.rr_r(insts.REG_A); break; // RRA
+	case 0x1F: insts.rra(); break; // RRA
 
 
 
@@ -303,7 +303,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0x33: SP++; break; // INC SP
 	case 0x34: value = bus.bus_read(HL.full); result = value + 1; insts.setFlag(cpu.FLAG_Z, result == 0); insts.setFlag(cpu.FLAG_N, false); insts.setFlag(cpu.FLAG_H, (value & 0x0F) + 1 > 0x0F); bus.bus_write(HL.full, result); break; // INC (HL)
 	case 0x35: value = bus.bus_read(HL.full); result = value - 1; insts.setFlag(cpu.FLAG_Z, result == 0); insts.setFlag(cpu.FLAG_N, true); insts.setFlag(cpu.FLAG_H, (value & 0x0F) == 0x00); bus.bus_write(HL.full, result); break;// DEC (HL)
-	case 0x36: value = bus.bus_read(PC + 1); bus.bus_write(HL.full, value); PC++; break; // LD (HL), n
+	case 0x36: value = bus.bus_read(PC++); bus.bus_write(HL.full, value); break; // LD (HL), n
 	case 0x37: insts.setFlag(FLAG_C, true); insts.setFlag(FLAG_N, false); insts.setFlag(FLAG_H, false); break; // SCF
 	case 0x38: insts.jr_f(static_cast<int8_t>(bus.bus_read(PC)), FLAG_C, false); break; // JR C, *
 	case 0x39: insts.add_hl_rr(SP); break; // ADD HL, SP
@@ -552,32 +552,14 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 		break;
 	}
 	
-	char flags[5] = { 0 }; // ZNHC + null terminator
-	flags[0] = (tempF & (1 << 7)) ? 'Z' : '-';  // Bit 7
-	flags[1] = (tempF & (1 << 6)) ? 'N' : '-';  // Bit 6
-	flags[2] = (tempF & (1 << 5)) ? 'H' : '-';  // Bit 5
-	flags[3] = (tempF & (1 << 4)) ? 'C' : '-';  // Bit 4
-	flags[4] = '\0';
+	
 	
 	/*if (bus.bus_read(0xDEF4) != tempff) {
 		logdata += "def4: " + byteToHexString(bus.bus_read(0xDEF4)) + " PC: " + wordToHexString(tempPC) + " curline: " + std::to_string(currline) + "\n";
 		tempff = bus.bus_read(0xDEF4);
 	}
 	currline++;*/
-		logdata += "A:" + byteToHexString(tempA) + " ";
-	logdata += "F:" + byteToHexString(tempF) + " ";
-	logdata += "B:" + byteToHexString(tempBC >> 8) + " ";
-	logdata += "C:" + byteToHexString(tempBC & 0xFF) + " ";
-	logdata += "D:" + byteToHexString(tempDE >> 8) + " ";
-	logdata += "E:" + byteToHexString(tempDE & 0xFF) + " ";
-	logdata += "H:" + byteToHexString(tempHL >> 8) + " ";
-	logdata += "L:" + byteToHexString(tempHL & 0xFF) +" ";
-	logdata += "SP:" + wordToHexString(tempSP) + " ";
-	logdata += "PC:" + wordToHexString(tempPC) + " ";
-	logdata += "PCMEM:" + byteToHexString(bus.bus_read(tempPC)) + ",";
-	logdata += byteToHexString(bus.bus_read(tempPC + 1)) + ",";
-	logdata += byteToHexString(bus.bus_read(tempPC + 2)) + ",";
-	logdata += byteToHexString(bus.bus_read(tempPC + 3)) + "\n";
+
 	
 	printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), tempBC, tempDE, tempHL, tempSP, tempIF, tempIE);
 	
@@ -586,8 +568,6 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 void CPU::Cycle() {
 	if (!halted) {
-		
-
 		uint8_t opcode = bus.bus_read(PC);
 		currOpcode = opcode;
 		tempPC = PC;
@@ -599,23 +579,9 @@ void CPU::Cycle() {
 		tempIF = bus.IF;
 		tempIE = bus.IE;
 		tempSP = SP;
-
 		PC++;
-
-
-
-
-
-		/*printf("%04X: %-7s (%02X %02X %02X) A: %02X B: %02X C: %02X\n",
-			PC, insts.inst_name(cur_inst->type), cur_opcode,
-			bus.bus_read(PC + 1), bus.bus_read(PC + 2), getReg(REG_A), getReg(REG_B), getReg(REG_B));*/
-
-
-
-		temp_t_cycles = 0; // Reset before instruction
-
+		temp_t_cycles = 0; // reset before instruction
 		ExecuteInstruction(opcode);
-
 		t_cycles += temp_t_cycles;
 		m_cycles += temp_t_cycles / 4;
 		//timer.timer_tick();
@@ -630,17 +596,11 @@ void CPU::Cycle() {
 
 			haltedshow = false;
 		}
-		if ((IME && (bus.IE & bus.IF & 0x1F)) || (!IME && haltBug)) {
-			halted = false;
-			printf("CPU woken by %s\n",
-				IME ? "interrupt" : "HALT bug");
-		}
+	
 	}
 	if ((IME && (bus.IE & bus.IF & 0x1F)) || (!IME && haltBug)) {
 			halted = false;
-			printf("CPU woken by %s\n",
-				IME ? "interrupt" : "HALT bug");
-			HandleInterrupt();
+			
 			imeAfterNextInsts = 0;
 		}
 

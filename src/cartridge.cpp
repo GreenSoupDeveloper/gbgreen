@@ -99,7 +99,7 @@ bool Cartridge::LoadROM(std::string filename) {
 		if (size_filter > 32768)
 			size_filter = 0x8000;
 		
-		for (long i = 0; i < size_filter; ++i)
+		for (int i = 0; i < size; ++i)
 		{
 			if (i > 0x0103 && i < 0x0134) {
 				logo[logocount] = buffer[i];
@@ -121,7 +121,10 @@ bool Cartridge::LoadROM(std::string filename) {
 
 
 			}
-
+			if (i < 0x100) {
+				rom_data[i] = cpu.dmg_bootrom[i];
+			}
+			else
 			rom_data[i] = buffer[i];
 		
 		}

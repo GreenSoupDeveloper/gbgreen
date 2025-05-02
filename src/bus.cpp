@@ -7,7 +7,7 @@
 #include <cartridge.h>
 #include <mbc.h>
 #include <timer.h>
-
+#include <emulator.h>
 // 0x0000 - 0x3FFF : ROM Bank 0
 // 0x4000 - 0x7FFF : ROM Bank 1 - Switchable
 // 0x8000 - 0x97FF : CHR RAM
@@ -24,11 +24,11 @@
 
 uint8_t Bus::bus_read(uint16_t addr) {
 	if (addr < 0x8000)
-		//return mbc.read_mbc1(addr);
-		return cart.rom_data[addr];
+		return mbc.read_mbc1(addr);
+		
 	//test area
 	else if (addr == 0xFF44) { // LY
-		return 0x90; // hardcoded for testing
+		return 0x90; 
 	}
 
 
@@ -64,7 +64,7 @@ uint8_t Bus::bus_read(uint16_t addr) {
 	else if (addr >= 0xFF00 && addr <= 0xFF7F) {
 		return io[addr - 0xFF00];
 	}
-	
+
 	else if (addr == 0xFFFF) {
 		return IE;
 	}
@@ -79,11 +79,13 @@ uint8_t Bus::bus_read(uint16_t addr) {
 
 void Bus::bus_write(uint16_t addr, uint8_t value) {
 
-	
+
 	if (addr < 0x8000 || (addr >= 0xA000 && addr < 0xC000))
 		mbc.write_mbc1(addr, value);
 	else if (addr >= 0x8000 && addr <= 0x9FFF) {
 		vram[addr - 0x8000] = value;
+		emu.writetodisplay = true;
+		//printf("\n\nITS WRITTING TO VRAAAAAAM!!!! %02X\n\n", value);
 	}
 	else if (addr >= 0xA000 && addr <= 0xBFFF) {
 		eram[addr - 0xA000] = value;
