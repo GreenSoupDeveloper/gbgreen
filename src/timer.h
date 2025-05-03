@@ -7,19 +7,19 @@
 
 class Timer {
 public:
-    uint16_t div_counter = 0;   // Internal counter for DIV
-    uint16_t tima_counter = 0;  // Internal counter for TIMA
+    int gameboy_ticks = 4 * 1024 * 1024;  // 4194304
 
-    uint8_t DIV = 0;
-    uint8_t TIMA = 0;
-    uint8_t TMA = 0;
-    uint8_t TAC = 0xF8;
+    uint16_t temp_div = 0;
+    uint16_t div = 0;
+    uint8_t temp_tima = 0;
+    uint8_t tima = 0;
+    uint8_t temp_tma = 0;
+    uint8_t tma = 0;
+    uint8_t temp_tac = 0;
+    uint8_t tac = 0;
+    void check();
 
-    void timer_init();
-    void timer_tick();
-    uint16_t getTimerThreshold();
-    void timer_write(uint16_t address, uint8_t value);
-    uint8_t timer_read(uint16_t address);
+    void inc();
 
   
 };

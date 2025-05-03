@@ -20,6 +20,19 @@ public:
     struct Tile {
         uint8_t data[16];  // 2 bytes per row (8 rows)
     };
+
+ 
+    uint8_t LY = 0;    // Current scanline (0-153)
+    uint8_t LYC = 0;   // Line Compare
+    uint8_t STAT = 0;  // Status register
+    uint8_t LCDC = 0;  // LCD Control
+    uint8_t SCY = 0;   // Scroll Y
+    uint8_t SCX = 0;   // Scroll X
+    uint8_t WY = 0;    // Window Y position
+    uint8_t WX = 0;    // Window X position
+    uint8_t BGP = 0xFC;// Background palette
+    uint32_t frameBuffer[160 * 144];
+
     /*
      Bit7   BG and Window over OBJ (0=No, 1=BG and Window colors 1-3 over the OBJ)
      Bit6   Y flip          (0=Normal, 1=Vertically mirrored)
@@ -38,6 +51,7 @@ public:
 
     void ppu_init();
     void ppu_tick();
+    void displayGraphics();
 
     void ppu_oam_write(uint16_t address, uint8_t value);
     uint8_t ppu_oam_read(uint16_t address);

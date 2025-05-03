@@ -1,15 +1,7 @@
-﻿  cpu.cpp
-C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.h(14,16): warning C4201: nonstandard extension used: nameless struct/union
-  (compiling source file '../src/cpu.cpp')
+﻿  bus.cpp
+C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.h(13,16): warning C4201: nonstandard extension used: nameless struct/union
+  (compiling source file '../src/bus.cpp')
   
-C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(31,14): warning C4305: '=': truncation from 'int' to 'uint8_t'
-C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(31,14): warning C4309: '=': truncation of constant value
-C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(550,10): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 1 has type 'uint64_t'
-      C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(550,10):
-      consider using '%lld' in the format string
-      C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(550,10):
-      consider using '%Id' in the format string
-      C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.cpp(550,10):
-      consider using '%I64d' in the format string
-  
+C:\Users\greens\Documents\GitHub\gbgreen\src\bus.cpp(31,10): warning C4305: 'return': truncation from 'int' to 'uint8_t'
+C:\Users\greens\Documents\GitHub\gbgreen\src\bus.cpp(31,10): warning C4309: 'return': truncation of constant value
   gbgreen.vcxproj -> C:\Users\greens\Documents\GitHub\gbgreen\bin\Debug\gbgreen.exe

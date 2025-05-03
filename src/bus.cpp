@@ -8,6 +8,7 @@
 #include <mbc.h>
 #include <timer.h>
 #include <emulator.h>
+#include <ppu.h>
 // 0x0000 - 0x3FFF : ROM Bank 0
 // 0x4000 - 0x7FFF : ROM Bank 1 - Switchable
 // 0x8000 - 0x97FF : CHR RAM
@@ -28,7 +29,8 @@ uint8_t Bus::bus_read(uint16_t addr) {
 		
 	//test area
 	else if (addr == 0xFF44) { // LY
-		return 0x90; 
+		//return 0x90; 
+		return ppu.LY;
 	}
 
 
@@ -53,8 +55,14 @@ uint8_t Bus::bus_read(uint16_t addr) {
 		printf("[INFO] ROM is trying to read the forbidden area. Address: 0x%04X\n", addr);
 		return 0xFF;
 	}
-	else if (addr == 0xFF04 || addr == 0xFF05 || addr == 0xFF06 || addr == 0xFF07)
-		return timer.timer_read(addr);
+	else if (addr == 0xFF04)
+		return timer.div >> 8;
+	else if (addr == 0xFF05)
+		return timer.tima;
+	else if (addr == 0xFF06)
+		return timer.tma;
+	else if (addr == 0xFF07)
+		return timer.tac;
 	else if (addr == 0xFF0F) {
 		return IF;
 	}
@@ -82,6 +90,10 @@ void Bus::bus_write(uint16_t addr, uint8_t value) {
 
 	if (addr < 0x8000 || (addr >= 0xA000 && addr < 0xC000))
 		mbc.write_mbc1(addr, value);
+	else if (addr == 0xFF44) { // LY
+		//return 0x90; 
+		ppu.LY = value;
+	}
 	else if (addr >= 0x8000 && addr <= 0x9FFF) {
 		vram[addr - 0x8000] = value;
 		emu.writetodisplay = true;
@@ -104,13 +116,22 @@ void Bus::bus_write(uint16_t addr, uint8_t value) {
 		printf("[INFO] ROM is trying to write to the forbidden area. Address: 0x%04X\n", addr);
 	}
 
-	else if (addr == 0xFF04 || addr == 0xFF05 || addr == 0xFF06 || addr == 0xFF07)
-		return timer.timer_write(addr, value);
+	else if (addr == 0xFF04)
+		timer.div = 0;
+	else if (addr == 0xFF05)
+		timer.tima = value;
+	else if (addr == 0xFF06)
+		timer.tma = value;
+	else if (addr == 0xFF07)
+		timer.tac = value;
+
 	else if (addr >= 0xFF80 && addr <= 0xFFFE) {
 		hram[addr - 0xFF80] = value;
 	}
 	else if (addr == 0xFF0F) {
+		
 		IF = value;
+		printf("addr ff0f: value %02X pc %04x", value, cpu.tempPC);
 	}
 	else if (addr >= 0xFF00 && addr <= 0xFF7F) {
 		io[addr - 0xFF00] = value;

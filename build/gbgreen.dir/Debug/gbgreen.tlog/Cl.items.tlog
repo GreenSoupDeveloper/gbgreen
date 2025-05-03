@@ -2,6 +2,7 @@ C:\Users\greens\Documents\GitHub\gbgreen\src\bus.cpp;C:\Users\greens\Documents\G
 C:\Users\greens\Documents\GitHub\gbgreen\src\cartridge.cpp;C:\Users\greens\Documents\GitHub\gbgreen\build\gbgreen.dir\Debug\cartridge.obj
 C:\Users\greens\Documents\GitHub\gbgreen\src\ext_instructions.cpp;C:\Users\greens\Documents\GitHub\gbgreen\build\gbgreen.dir\Debug\ext_instructions.obj
 C:\Users\greens\Documents\GitHub\gbgreen\src\instructions.cpp;C:\Users\greens\Documents\GitHub\gbgreen\build\gbgreen.dir\Debug\instructions.obj
+C:\Users\greens\Documents\GitHub\gbgreen\src\interrupts.cpp;C:\Users\greens\Documents\GitHub\gbgreen\build\gbgreen.dir\Debug\interrupts.obj
 C:\Users\greens\Documents\GitHub\gbgreen\src\io.cpp;C:\Users\greens\Documents\GitHub\gbgreen\build\gbgreen.dir\Debug\io.obj
 C:\Users\greens\Documents\GitHub\gbgreen\src\mbc.cpp;C:\Users\greens\Documents\GitHub\gbgreen\build\gbgreen.dir\Debug\mbc.obj
 C:\Users\greens\Documents\GitHub\gbgreen\src\ppu.cpp;C:\Users\greens\Documents\GitHub\gbgreen\build\gbgreen.dir\Debug\ppu.obj

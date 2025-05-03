@@ -37,6 +37,9 @@
     <ClCompile Include="..\src\ppu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\interrupts.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\greens\Documents\GitHub\gbgreen\CMakeLists.txt" />
@@ -82,6 +85,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\timer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\interrupts.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

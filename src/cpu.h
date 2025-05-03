@@ -4,7 +4,6 @@
 #include <chrono>
 #include <random>
 #include <cartridge.h>
-
 class CPU
 {
 
@@ -34,7 +33,9 @@ public:
 
     uint8_t currOpcode = 0x00; // current opcode
     int currline = 1;
-
+    uint16_t tempPC = 0x100;
+    uint8_t tempA, tempF, tempIF, tempIE;
+    uint16_t tempBC, tempDE, tempHL, tempSP;
     const uint8_t dmg_bootrom[0xFF] = {
     0x31, 0xFE, 0xFF, 0xAF, 0x21, 0xFF, 0x9F, 0x32, 0xCB, 0x7C, 0x20, 0xFB, 0x21, 0x26, 0xFF, 0x0E,
     0x11, 0x3E, 0x80, 0x32, 0xE2, 0x0C, 0x3E, 0xF3, 0xE2, 0x32, 0x3E, 0x77, 0x77, 0x3E, 0xFC, 0xE0,
@@ -69,15 +70,6 @@ public:
         0xBB, 0xBB, 0x67, 0x63, 0x6E, 0x0E, 0xEC, 0xCC, 0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E
     }; // nintendo logo used to compare to the rom's one
 
-    typedef enum {
-        IT_VBLANK = 1,
-        IT_LCD_STAT = 2,
-        IT_TIMER = 4,
-        IT_SERIAL = 8,
-        IT_JOYPAD = 16
-    } interrupt_type; // interrupt types
-
-    interrupt_type interrupts;
     std::string logdata = "";
 
 
@@ -86,9 +78,7 @@ public:
     void initializeGameboy();
     void Push16(uint16_t value); // push 16-bytes to stack
     uint16_t Read16(uint16_t addr); // read 16-bit byte from memory
-    bool InterruptCheck(uint16_t address, interrupt_type it); // to check interrupt things
-    void HandleInterrupt(); // handle interrupts
-    void RequestInterrupt(interrupt_type t); // request interrupts
+   
     std::string byteToHexString(uint8_t value);
     std::string wordToHexString(uint16_t value);
 

@@ -4,8 +4,20 @@
 #include <stdint.h>
 #include <ppu.h>
 #include <bus.h>
+#include <emulator.h>
+
+const int FB_SIZE = (256 * 256 * 3);
+const int FB_SIZE_A = (256 * 256 * 4);
 
 void PPU::ppu_init() {
+    SCY = 0;
+    SCX = 0;
+    memset(bgmap, 0, FB_SIZE);
+    memset(spritemap, 0x69, FB_SIZE);
+    memset(winmap, 0x0, FB_SIZE);
+    memset(bgmapA, 0, FB_SIZE_A);
+    memset(spritemapA, 0, FB_SIZE_A);
+    memset(winmapA, 0, FB_SIZE_A);
 
 }
 
@@ -26,13 +38,8 @@ PPU::Tile PPU::getTile(uint8_t tileIndex) {
 }
 uint32_t PPU::getPixelColor(uint8_t pixelValue) {
     // Game Boy palette: 0=white, 3=black
-    const uint32_t palette[4] = {
-        0xFFFFFFFF,  // White
-        0xAAAAAAFF,  // Light gray
-        0x555555FF,  // Dark gray
-        0x000000FF   // Black
-    };
-    return palette[pixelValue];
+  
+    return emu.palette[pixelValue];
 }
 // Get a specific pixel from a tile
 uint8_t PPU::getPixel(const Tile& tile, uint8_t x, uint8_t y) {
@@ -58,4 +65,24 @@ uint8_t PPU::ppu_oam_read(uint16_t address) {
 
  
     return bus.oam[address];
+}
+void PPU::displayGraphics() {
+    uint16_t currtile = 0x97FF;
+    uint8_t currmapx = 0x00;
+    uint8_t currmapy = 0x00;
+    for (int ry = 0; ry < 144; ry += 8) {
+        for (int rx = 0; rx < 160; rx += 8) {
+            currtile++;
+            if ((currtile & 0x00FF) == 0x0014 || (currtile & 0x00FF) == 0x0034 || (currtile & 0x00FF) == 0x0054 || (currtile & 0x00FF) == 0x0074 || (currtile & 0x00FF) == 0x0094 || (currtile & 0x00FF) == 0x00B4 || (currtile & 0x00FF) == 0x00D4 || (currtile & 0x00FF) == 0x00F4)
+                currtile += 12;
+            //printf("curtile %04x\n", currtile);
+
+            for (int y = 0; y < 8; y++) {
+                for (int x = 0; x < 8; x++) {
+                    emu.pixels[(ry + y) * 160 + (rx + x)] = ppu.getPixelColor(ppu.getPixel(ppu.getTile(bus.bus_read(currtile)), x, y));
+                }
+            }
+        }
+    }
+    currtile = 0x97FF;
 }

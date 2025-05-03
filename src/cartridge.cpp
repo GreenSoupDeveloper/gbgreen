@@ -121,8 +121,11 @@ bool Cartridge::LoadROM(std::string filename) {
 
 
 			}
-			
+			if(i >= 0x0100)
 			rom_data[i] = buffer[i];
+			else {
+				rom_data[i] = cpu.dmg_bootrom[i];
+			}
 		
 		}
 

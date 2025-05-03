@@ -11,6 +11,7 @@
 #include <timer.h>
 #include <bitset>
 #include <mbc.h>
+#include <interrupts.h>
 CPU::CPU()
 {
 	//if its not bootrom
@@ -28,10 +29,10 @@ CPU::CPU()
 
 
 
-	timer.DIV = 0xABCC;
+	timer.div = 0xABCC;
 }
 void CPU::initializeGameboy() {
-	
+
 	mbc.currentBank = 1;
 
 	AF.hi = 0x01;
@@ -43,9 +44,9 @@ void CPU::initializeGameboy() {
 	HL.hi = 0x01;
 	HL.lo = 0x4D;
 	SP = 0xFFFE;
-	PC = 0x0100;
+	PC = 0x0000;
 	IME = false;
-	
+
 	bus.bus_write(0xDEF4, 0x01);
 
 	bus.bus_write(0xFF00, 0xCF); // P1
@@ -91,7 +92,7 @@ void CPU::initializeGameboy() {
 
 
 	bus.IE = 0x00;
-	
+
 	halted = false;
 }
 
@@ -108,7 +109,7 @@ void CPU::halt() {
 		halted = true;
 		haltedshow = true;
 	}
-	
+
 }
 
 
@@ -171,46 +172,9 @@ uint16_t CPU::Read16(uint16_t addr) {
 	uint8_t hi = bus.bus_read(addr + 1);
 	return lo | (hi << 8);
 }
-bool CPU::InterruptCheck(uint16_t address, interrupt_type it) {
-	if (bus.IF & it && bus.IE & it) {
-		Push16(address);
-		PC = address;
-		bus.IF &= ~it;
-		halted = false;
-	    IME = false;
-		temp_t_cycles += 20;
-
-		return true;
-	}
-
-	return false;
-}
-void CPU::HandleInterrupt() {
-
-	if (InterruptCheck(0x40, IT_VBLANK)) {
-
-    } else if (InterruptCheck(0x48, IT_LCD_STAT)) {
-
-    } else if (InterruptCheck(0x50, IT_TIMER)) {
-
-    }  else if (InterruptCheck(0x58, IT_SERIAL)) {
-
-    }  else if (InterruptCheck(0x60, IT_JOYPAD)) {
-
-	}
-	else
-		return;
-	printf("interrupt woked cpu up\n");
-}
-void CPU::RequestInterrupt(interrupt_type t) {
-	bus.IF |= t;
-	halted = false;
-}
 
 int imeAfterNextInsts = 0;
-uint16_t tempPC = 0x100;
-uint8_t tempA, tempF, tempIF, tempIE;
-uint16_t tempBC, tempDE, tempHL, tempSP;
+
 
 void CPU::ExecuteInstruction(uint8_t opcode) {
 	uint8_t value, result, offset, low, high;
@@ -236,7 +200,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	}
 	//printf("Executing instruction: %02X  PC: %04X\n", opcode, PC);
 
-	temp_t_cycles = 0;
+	
 	temp_t_cycles += insts.instructionTicks[opcode];
 
 	switch (opcode) {
@@ -506,7 +470,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 
 
 
-	case 0xE0: addr = 0xFF00 + bus.bus_read(cpu.PC++); bus.bus_write(addr, cpu.AF.hi); break; // LDH (a8),A
+	case 0xE0: addr = 0xFF00 + bus.bus_read(cpu.PC++); bus.bus_write(addr, AF.hi); break; // LDH (a8),A
 	case 0xE1: insts.pop_rr(HL); break; // POP HL
 	case 0xE2: addr = 0xFF00 + cpu.BC.lo; bus.bus_write(addr, cpu.AF.hi); break; // LD (C), A
 	case 0xE3: /*nothing*/ break;
@@ -524,7 +488,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	case 0xEF: insts.rst_addr(0x28); break;
 
 
-	case 0xF0: offset = bus.bus_read(PC++); addr = 0xFF00 | offset; AF.hi = bus.bus_read(addr); break;
+	case 0xF0: addr = 0xFF00 + bus.bus_read(PC++); AF.hi = bus.bus_read(addr); break;
 	case 0xF1: insts.pop_rr(AF); AF.lo &= 0xf0; break; // POP AF
 	case 0xF2: addr = 0xFF00 + insts.getReg(insts.REG_C); AF.hi = bus.bus_read(addr); break; // LD A,(C)
 	case 0xF3: imeAfterNextInsts = 1; /* disable IME after next instruction*/ break; // DI
@@ -546,7 +510,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	default:
 
 		printf("[ERROR] Unknown opcode: 0x%02x at 0x%04x | ", opcode, tempPC);
-		printf("DIV: %d\n", timer.DIV);
+		printf("DIV: %d\n", timer.div);
 		printf("Cycles: %d\n", t_cycles);
 		return;
 		break;
@@ -567,69 +531,67 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	logdata += byteToHexString(bus.bus_read(tempPC + 2)) + ",";
 	logdata += byteToHexString(bus.bus_read(tempPC + 3)) + "\n";
 
-	
-	
+
+
 	/*if (bus.bus_read(0xDEF4) != tempff) {
 		logdata += "def4: " + byteToHexString(bus.bus_read(0xDEF4)) + " PC: " + wordToHexString(tempPC) + " curline: " + std::to_string(currline) + "\n";
 		tempff = bus.bus_read(0xDEF4);
 	}
 	currline++;*/
 
-	
-	//printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), tempBC, tempDE, tempHL, tempSP, tempIF, tempIE);
-	
+
+	printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), tempBC, tempDE, tempHL, tempSP, tempIF, tempIE);
+
 
 }
 
 void CPU::Cycle() {
-	
-		if (!halted) {
 
-			uint8_t opcode = bus.bus_read(PC);
-			currOpcode = opcode;
-			tempPC = PC;
-			tempA = AF.hi;
-			tempF = AF.lo;
-			tempBC = BC.full;
-			tempDE = DE.full;
-			tempHL = HL.full;
-			tempIF = bus.IF;
-			tempIE = bus.IE;
-			tempSP = SP;
-			PC++;
-			temp_t_cycles = 0; // reset before instruction
-			ExecuteInstruction(opcode);
-			t_cycles += temp_t_cycles;
-			m_cycles += temp_t_cycles / 4;
-			//timer.timer_tick();
+	if (halted) {
+		t_cycles += 4;
+		return;
+	}
 
+	uint8_t opcode = bus.bus_read(PC);
+	currOpcode = opcode;
+	tempPC = PC;
+	tempA = AF.hi;
+	tempF = AF.lo;
+	tempBC = BC.full;
+	tempDE = DE.full;
+	tempHL = HL.full;
+	tempIF = bus.IF;
+	tempIE = bus.IE;
+	tempSP = SP;
+	if (!haltBug)
+		PC++;
 
-		}
-		else {
+    haltBug = false;
+	temp_t_cycles = 0; // reset before instruction
 
-			t_cycles += 4;
-			if (haltedshow) {
-				std::cout << "Halted!\n";
-
-				haltedshow = false;
-			}
-
-		}
-		if ((IME && (bus.IE & bus.IF & 0x1F)) || (!IME && haltBug)) {
-			halted = false;
-
-			imeAfterNextInsts = 0;
-		}
+	ExecuteInstruction(opcode);
+	t_cycles += temp_t_cycles;
+	m_cycles += temp_t_cycles / 4;
+	//timer.timer_tick();
 
 
-		if (imeAfterNextInsts == 5) {
-			IME = true;
-			imeAfterNextInsts = 0;
-		}
-		ticks += 1;
-		
-	
-	
+
+
+	if ((IME && (bus.IE & bus.IF & 0x1F)) || (!IME && haltBug)) {
+		halted = false;
+
+		imeAfterNextInsts = 0;
+	}
+
+
+	if (imeAfterNextInsts == 5) {
+		IME = true;
+		imeAfterNextInsts = 0;
+	}
+	ticks += 1;
+
+
+
 }
 std::string CPU::byteToHexString(uint8_t value) {
 	char buffer[3];

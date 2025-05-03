@@ -18,12 +18,14 @@
 #include <timer.h>
 #include <ppu.h>
 #include <thread>
+#include <interrupts.h>
 CPU::~CPU() {}
 Cartridge::~Cartridge() {}
 Instruction::~Instruction() {}
 ExtInstruction::~ExtInstruction() {}
 IO::~IO() {}
 CPU cpu;
+Interrupt interrupts;
 Tools tools;
 Emulator emu;
 Cartridge cart;
@@ -34,6 +36,7 @@ IO io;
 MBC mbc;
 Timer timer;
 PPU ppu;
+
 
 void UpdateCPU() {
 	if (!emu.paused) {
@@ -151,10 +154,13 @@ void AppUpdates() {
 
 
 
-	if (stay) {
-
-		//for(int i = 0; i < 144; i++)
+	
+		cpu.temp_t_cycles = 0;
+		bool interrupted = interrupts.check();
+		if (!interrupted)
 		cpu.Cycle();
+
+		timer.inc();
 
 
 
@@ -164,7 +170,7 @@ void AppUpdates() {
 		emu.ticks++;
 		
 
-	}
+	
 	updatelog++;
 
 	
@@ -237,13 +243,19 @@ int main(int argc, char* argv[])
 				break;
 			}
 		}
+		if (stay) {
+			AppUpdates();
+			
 
-		AppUpdates();
-		AppUpdates();
-		if (updatelog == 144) {
-			io.dbg_update();
-			io.dbg_print();
-			updatelog = 0;
+			if (updatelog == 144) {
+				io.dbg_update();
+				io.dbg_print();
+				updatelog = 0;
+				ppu.displayGraphics();
+
+				UpdatePixels();
+
+			}
 		}
 	}
 	SDL_AppQuit(nullptr, SDL_APP_SUCCESS);

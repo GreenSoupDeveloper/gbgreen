@@ -344,6 +344,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="..\src\cartridge.cpp" />
     <ClCompile Include="..\src\ext_instructions.cpp" />
     <ClCompile Include="..\src\instructions.cpp" />
+    <ClCompile Include="..\src\interrupts.cpp" />
     <ClCompile Include="..\src\io.cpp" />
     <ClCompile Include="..\src\mbc.cpp" />
     <ClCompile Include="..\src\ppu.cpp" />
@@ -361,6 +362,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClInclude Include="..\src\ext_instructions.h" />
     <ClInclude Include="..\src\gb_gamepad.h" />
     <ClInclude Include="..\src\instructions.h" />
+    <ClInclude Include="..\src\interrupts.h" />
     <ClInclude Include="..\src\io.h" />
     <ClInclude Include="..\src\mbc.h" />
     <ClInclude Include="..\src\ppu.h" />
