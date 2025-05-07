@@ -13,17 +13,12 @@ public:
     const int ht = 288;
     const int gbResX = 160;
     const int gbResY = 144;
-    uint32_t pixels[160 * 144];
+    
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
     SDL_Texture* texture = nullptr;
     int ticks = 0;
-    uint32_t palette[4] = {
-      0xFFFFFFFF,
-      0xFFAAAAAA,
-      0xFF555555,
-      0xFF000000,
-    };
+   
     bool romLoaded = false;
     bool running = false;
     bool writetodisplay = false;

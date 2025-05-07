@@ -1,7 +1,17 @@
-﻿  bus.cpp
-C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.h(13,16): warning C4201: nonstandard extension used: nameless struct/union
-  (compiling source file '../src/bus.cpp')
+﻿  main.cpp
+C:\Users\greens\Documents\GitHub\gbgreen\src\cpu.h(13,10): warning C4201: nonstandard extension used: nameless struct/union
+  (compiling source file '../src/main.cpp')
   
-C:\Users\greens\Documents\GitHub\gbgreen\src\bus.cpp(31,10): warning C4305: 'return': truncation from 'int' to 'uint8_t'
-C:\Users\greens\Documents\GitHub\gbgreen\src\bus.cpp(31,10): warning C4309: 'return': truncation of constant value
+C:\Users\greens\Documents\GitHub\gbgreen\src\main.cpp(11,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\greens\Documents\GitHub\gbgreen\src\main.cpp(12,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+C:\Users\greens\Documents\GitHub\gbgreen\src\ppu.h(29,20): warning C4201: nonstandard extension used: nameless struct/union
+  (compiling source file '../src/main.cpp')
+  
+C:\Users\greens\Documents\GitHub\gbgreen\src\ppu.h(45,20): warning C4201: nonstandard extension used: nameless struct/union
+  (compiling source file '../src/main.cpp')
+  
+C:\Users\greens\Documents\GitHub\gbgreen\src\main.cpp(73,34): warning C4100: 'appstate': unreferenced formal parameter
+C:\Users\greens\Documents\GitHub\gbgreen\src\main.cpp(109,8): warning C4189: 'aaa': local variable is initialized but not referenced
+C:\Users\greens\Documents\GitHub\gbgreen\src\main.cpp(138,48): warning C4100: 'result': unreferenced formal parameter
+C:\Users\greens\Documents\GitHub\gbgreen\src\main.cpp(138,24): warning C4100: 'appstate': unreferenced formal parameter
   gbgreen.vcxproj -> C:\Users\greens\Documents\GitHub\gbgreen\bin\Debug\gbgreen.exe

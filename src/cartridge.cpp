@@ -81,13 +81,20 @@ bool Cartridge::LoadROM(std::string filename) {
 			std::cout << "[INFO] ROM size is higher than 32768 bytes (32KB)! ROM will continue executing if it has MBC.\n";
 			//size = 0x8000;
 		}
-		cart.type = buffer[0x147];
-		cart.rom_size = buffer[0x148];
-		detect_mbc_type(cart.type);
-		cart.rom_banks_count = size / 0x4000;
-		cart.ram_banks_count = get_ram_banks_count(buffer[0x149]);
-		std::cout << "[INFO] ROM Type: " << ROM_TYPES[cart.type] << " | ROM Banks: " << rom_banks_count << "\n";
-	
+		if (size == 256) {
+			std::cout << "INFO: GameBoy Bootroom loaded.\n\n";
+			cpu.runningBootrom = true;
+		}
+
+		if (!cpu.runningBootrom) {
+			cart.type = buffer[0x147];
+			cart.rom_size = buffer[0x148];
+			detect_mbc_type(cart.type);
+			cart.rom_banks_count = size / 0x4000;
+			cart.ram_banks_count = get_ram_banks_count(buffer[0x149]);
+			std::cout << "[INFO] ROM Type: " << ROM_TYPES[cart.type] << " | ROM Banks: " << rom_banks_count << "\n";
+		}
+
 
 
 		// load the rom into the gb's memory, since its going to rom_data and not main memory, it wont start at 0x0100 (256 bytes)
@@ -98,43 +105,49 @@ bool Cartridge::LoadROM(std::string filename) {
 		int size_filter = size;
 		if (size_filter > 32768)
 			size_filter = 0x8000;
+
 		
 		for (int i = 0; i < size; ++i)
 		{
-			if (i > 0x0103 && i < 0x0134) {
-				logo[logocount] = buffer[i];
-				if (logo[logocount] == cpu.nintendoLogo[logocount]) {
+			if (!cpu.runningBootrom) {
+				if (i > 0x0103 && i < 0x0134) {
+					logo[logocount] = buffer[i];
+					if (logo[logocount] == cpu.nintendoLogo[logocount]) {
+
+					}
+					else {
+						logomatches = false;
+					}
+					logocount++;
+
 
 				}
-				else {
-					logomatches = false;
+				else if (i > 0x0133 && i < 0x0144) {
+					title[titlecount] = buffer[i];
+					titleting += title[titlecount];
+					titlecount++;
+
+
+
 				}
-				logocount++;
-
-
-			}
-			else if (i > 0x0133 && i < 0x0144) {
-				title[titlecount] = buffer[i];
-				titleting += title[titlecount];
-				titlecount++;
-
-
-
 			}
 			if(i >= 0x0100)
 			rom_data[i] = buffer[i];
 			else {
 				rom_data[i] = cpu.dmg_bootrom[i];
 			}
-		
+
 		}
 
-		uint16_t x = 0;
-		for (uint16_t i = 0x0134; i <= 0x014C; i++) {
-			x = x - rom_data[i] - 1;
+		if (!cpu.runningBootrom) {
+			uint16_t x = 0;
+			for (uint16_t i = 0x0134; i <= 0x014C; i++) {
+				x = x - rom_data[i] - 1;
+			}
+			cart.checksum = rom_data[0x014D];
+			printf("[INFO] Checksum : %2.2X (%s)\n", cart.checksum, (x & 0xFF) ? "PASSED" : "FAILED");
 		}
-		cart.checksum = rom_data[0x014D];
-		printf("[INFO] Checksum : %2.2X (%s)\n", cart.checksum, (x & 0xFF) ? "PASSED" : "FAILED");
+		
 		if (logomatches) {
 			printf("[INFO] Nintendo logo matches!\n\n");
 		}
@@ -143,10 +156,7 @@ bool Cartridge::LoadROM(std::string filename) {
 
 		}
 		std::cout << "[INFO] ROM '" << titleting << "' Loaded!\n\n";
-		if (size == 256) {
-			std::cout << "INFO: GameBoy Bootroom loaded.\n\n";
-			cpu.PC = 0x00;
-		}
+
 
 
 		// clean the buffer

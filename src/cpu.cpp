@@ -14,17 +14,6 @@
 #include <interrupts.h>
 CPU::CPU()
 {
-	//if its not bootrom
-	AF.hi = 0x01;
-	AF.lo = 0xB0;
-	BC.hi = 0x00;
-	BC.lo = 0x13;
-	DE.hi = 0x00;
-	DE.lo = 0xD8;
-	HL.hi = 0x01;
-	HL.lo = 0x4D;
-	SP = 0xFFFE;
-	PC = 0x0100;
 	IME = false;
 
 
@@ -40,11 +29,14 @@ void CPU::initializeGameboy() {
 	BC.hi = 0x00;
 	BC.lo = 0x13;
 	DE.hi = 0x00;
-	DE.lo = 0xD8;
+	DE.lo = 0x00; // 0xD8
 	HL.hi = 0x01;
 	HL.lo = 0x4D;
 	SP = 0xFFFE;
-	PC = 0x0000;
+	if (!runningBootrom)
+		PC = 0x0000;
+	else
+		PC = 0x0000;
 	IME = false;
 
 	bus.bus_write(0xDEF4, 0x01);
@@ -200,7 +192,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	}
 	//printf("Executing instruction: %02X  PC: %04X\n", opcode, PC);
 
-	
+
 	temp_t_cycles += insts.instructionTicks[opcode];
 
 	switch (opcode) {
@@ -540,7 +532,7 @@ void CPU::ExecuteInstruction(uint8_t opcode) {
 	currline++;*/
 
 
-	printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n",tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), tempBC, tempDE, tempHL, tempSP, tempIF, tempIE);
+	//printf("[INFO] PC: %04X | Executed 0x%02X (%02X %02X) | A: %02X F: %02X (b%s) BC: %04X DE: %04X HL: %04X SP: %04X IF: %02X IE: %02X\n", tempPC, opcode, bus.bus_read(tempPC + 1), bus.bus_read(tempPC + 2), tempA, tempF, std::bitset<8>(tempF).to_string().c_str(), tempBC, tempDE, tempHL, tempSP, tempIF, tempIE);
 
 
 }
@@ -566,7 +558,7 @@ void CPU::Cycle() {
 	if (!haltBug)
 		PC++;
 
-    haltBug = false;
+	haltBug = false;
 	temp_t_cycles = 0; // reset before instruction
 
 	ExecuteInstruction(opcode);

@@ -57,7 +57,7 @@ void UpdatePixels() {
 	// Fill pixel array with white (for testing)
 
 
-	SDL_UpdateTexture(emu.texture, NULL, emu.pixels, emu.gbResX * sizeof(uint32_t));
+	SDL_UpdateTexture(emu.texture, NULL, ppu.frameBuffer, emu.gbResX * sizeof(uint32_t));
 
 	// In SDL3, use SDL_RenderTexture instead of SDL_RenderCopy
 	SDL_RenderTexture(emu.renderer, emu.texture, NULL, NULL);
@@ -128,7 +128,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 				emu.paused = true;
 		}
 	}
-		
+
 
 
 	return SDL_APP_CONTINUE;
@@ -154,26 +154,28 @@ void AppUpdates() {
 
 
 
-	
-		cpu.temp_t_cycles = 0;
-		bool interrupted = interrupts.check();
-		if (!interrupted)
+
+	cpu.temp_t_cycles = 0;
+	bool interrupted = interrupts.check();
+	if (!interrupted)
 		cpu.Cycle();
 
-		timer.inc();
-
-
-
-
-		//UpdatePixels();
-		//SDL_Delay(1);
-		emu.ticks++;
-		
-
+	timer.inc();
 	
+	//ppu.ppu_tick();
+	
+
+
+
+	//UpdatePixels();
+	//SDL_Delay(1);
+	emu.ticks++;
+
+
+
 	updatelog++;
 
-	
+
 }
 /* Called once at startup */
 int main(int argc, char* argv[])
@@ -205,8 +207,11 @@ int main(int argc, char* argv[])
 	if (emu.selectedColorPallete == 0) {
 		tools.readPaletteFile("palettes/Monochrome.gbcp");
 	}
-	else {
+	else if (emu.selectedColorPallete == 1) {
 		tools.readPaletteFile("palettes/Green.gbcp");
+	}
+	else {
+		tools.readPaletteFile("palettes/VeryGreen.gbcp");
 	}
 	tools.RenderToDisplay("assets/title");
 	emu.running = true;
@@ -231,8 +236,6 @@ int main(int argc, char* argv[])
 
 
 
-
-
 	SDL_Event event;
 
 	while (true) {
@@ -245,7 +248,7 @@ int main(int argc, char* argv[])
 		}
 		if (stay) {
 			AppUpdates();
-			
+
 
 			if (updatelog == 144) {
 				io.dbg_update();

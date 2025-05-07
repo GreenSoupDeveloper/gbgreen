@@ -521,7 +521,7 @@ void Instruction::add_sp_r8(int8_t r8) {
 	setFlag(cpu.FLAG_C, ((sp & 0xFF) + (r8 & 0xFF)) > 0xFF);
 
 	cpu.SP = result;
-	cpu.temp_t_cycles += 16;  // 16 cycles total
+	//cpu.temp_t_cycles += 16;  // 16 cycles total
 }
 void Instruction::ld_a16_a() {
 	// Read 16-bit address (little-endian)

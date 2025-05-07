@@ -328,7 +328,7 @@ void ExtInstruction::ExecuteExtInstruction(uint8_t opcode) {
 		return;
 		break;
 	}
-	printf("[INFO] EXTENDED Opcode 0x%02X at PC: 0x%04X executed\n", opcode, cpu.PC);
+	//printf("[INFO] EXTENDED Opcode 0x%02X at PC: 0x%04X executed\n", opcode, cpu.PC);
 }
 
 

@@ -7,6 +7,7 @@
 #include <sstream>
 #include <tools.h>
 #include <emulator.h>
+#include <ppu.h>
 
 
 void Tools::RenderToDisplay(std::string filepath) {
@@ -41,16 +42,16 @@ void Tools::RenderToDisplay(std::string filepath) {
 
 
 		if (rawArray[i] == '0') {
-			emu.pixels[i] = emu.palette[0];
+			ppu.frameBuffer[i] = ppu.palette[0];
 		}
 		else if (rawArray[i] == '1') {
-			emu.pixels[i] = emu.palette[1];
+			ppu.frameBuffer[i] = ppu.palette[1];
 		}
 		else if (rawArray[i] == '2') {
-			emu.pixels[i] = emu.palette[2];
+			ppu.frameBuffer[i] = ppu.palette[2];
 		}
 		else {
-			emu.pixels[i] = emu.palette[3];
+			ppu.frameBuffer[i] = ppu.palette[3];
 		}
 
 
@@ -84,7 +85,7 @@ void Tools::readPaletteFile(const std::string& filename) {
 		}
 
 		if (!line.empty()) {
-			emu.palette[i] = hexStringToUint32(line);
+			ppu.palette[i] = hexStringToUint32(line);
 			++i;
 		}
 	}
